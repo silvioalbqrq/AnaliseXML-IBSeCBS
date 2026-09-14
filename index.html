@@ -355,6 +355,11 @@
             accent-color: var(--accent-green);
         }
 
+        .empty-cell {
+            color: #cbd5e1;
+            font-weight: 400;
+        }
+
         .empty-state {
             padding: 48px;
             text-align: center;
@@ -389,7 +394,7 @@
             </div>
         </div>
         <h1 class="title">AnalisaXML Tributário: IBS e CBS</h1>
-        <p class="subtitle">Visualização clara e organizada de itens, Base de Cálculo (&lt;vBC&gt;), IBS e CBS</p>
+        <p class="subtitle">Somente valores do XML (&lt;vBC&gt;, IBS e CBS) — em branco quando a tag não existir</p>
     </header>
 
     <div class="container">
@@ -414,7 +419,7 @@
             <div class="card highlight">
                 <div class="card-title" style="color: #15803d;">Base de Cálculo IBS/CBS (&lt;vBC&gt;)</div>
                 <div class="card-value" id="lblTotalBC" style="color: #166534;">R$ 0,00</div>
-                <div class="card-desc">Extraído da tag especifica do XML</div>
+                <div class="card-desc">Somente valor do XML — em branco se ausente</div>
             </div>
 
             <div class="card">
@@ -540,56 +545,60 @@
                 const cProd = getTagValue(prod, "cProd") || (i + 1);
                 const xProd = getTagValue(prod, "xProd") || "Produto sem descrição";
                 const ncm = getTagValue(prod, "NCM") || "-";
-                const vProd = parseFloat(getTagValue(prod, "vProd") || "0");
+                const vProd = getTagNumber(prod, "vProd") ?? 0;
 
-                let cst = "-";
-                let cClassTrib = "-";
-                let vBC_IBSCBS = vProd;
-                let pCBS = 0.90;
-                let vCBS = 0;
-                let pIBSUF = 0.10;
-                let vIBSUF = 0;
-                let pIBSMun = 0.00;
-                let vIBSMun = 0;
+                // Regra: só exibe valor que consta no XML. Sem tag = null = em branco.
+                let cst = null;
+                let cClassTrib = null;
+                let vBC_IBSCBS = null;
+                let pCBS = null;
+                let vCBS = null;
+                let pIBSUF = null;
+                let vIBSUF = null;
+                let pIBSMun = null;
+                let vIBSMun = null;
+                let vIBSTotal = null;
 
                 const ibscbsNode = det.getElementsByTagName("IBSCBS")[0];
                 if (ibscbsNode) {
-                    cst = getTagValue(ibscbsNode, "CST") || "-";
-                    cClassTrib = getTagValue(ibscbsNode, "cClassTrib") || "-";
+                    cst = getTagValue(ibscbsNode, "CST");
+                    cClassTrib = getTagValue(ibscbsNode, "cClassTrib");
 
                     const gIBSCBS = ibscbsNode.getElementsByTagName("gIBSCBS")[0];
                     if (gIBSCBS) {
-                        const vbcVal = getTagValue(gIBSCBS, "vBC");
-                        if (vbcVal !== null) vBC_IBSCBS = parseFloat(vbcVal);
+                        vBC_IBSCBS = getTagNumber(gIBSCBS, "vBC");
 
-                        // gIBSUF
+                        // gIBSUF — lê apenas tags filhas diretas do grupo
                         const gIBSUF = gIBSCBS.getElementsByTagName("gIBSUF")[0];
                         if (gIBSUF) {
-                            pIBSUF = parseFloat(getTagValue(gIBSUF, "pIBSUF") || "0");
-                            vIBSUF = parseFloat(getTagValue(gIBSUF, "vIBSUF") || "0");
+                            pIBSUF = getTagNumber(gIBSUF, "pIBSUF");
+                            vIBSUF = getTagNumber(gIBSUF, "vIBSUF");
                         }
 
                         // gIBSMun
                         const gIBSMun = gIBSCBS.getElementsByTagName("gIBSMun")[0];
                         if (gIBSMun) {
-                            pIBSMun = parseFloat(getTagValue(gIBSMun, "pIBSMun") || "0");
-                            vIBSMun = parseFloat(getTagValue(gIBSMun, "vIBSMun") || "0");
+                            pIBSMun = getTagNumber(gIBSMun, "pIBSMun");
+                            vIBSMun = getTagNumber(gIBSMun, "vIBSMun");
                         }
 
                         // gCBS
                         const gCBS = gIBSCBS.getElementsByTagName("gCBS")[0];
                         if (gCBS) {
-                            pCBS = parseFloat(getTagValue(gCBS, "pCBS") || "0");
-                            vCBS = parseFloat(getTagValue(gCBS, "vCBS") || "0");
+                            pCBS = getTagNumber(gCBS, "pCBS");
+                            vCBS = getTagNumber(gCBS, "vCBS");
+                        }
+
+                        // <vIBS> total declarado no XML (quando existir, prevalece)
+                        const vIBSTag = getTagNumber(gIBSCBS, "vIBS");
+                        if (vIBSTag !== null) {
+                            vIBSTotal = vIBSTag;
+                        } else if (vIBSUF !== null || vIBSMun !== null) {
+                            vIBSTotal = (vIBSUF ?? 0) + (vIBSMun ?? 0);
                         }
                     }
-                } else {
-                    vCBS = vBC_IBSCBS * (pCBS / 100);
-                    vIBSUF = vBC_IBSCBS * (pIBSUF / 100);
-                    vIBSMun = vBC_IBSCBS * (pIBSMun / 100);
                 }
-
-                const vIBSTotal = vIBSUF + vIBSMun;
+                // Sem <IBSCBS>: todos os campos IBS/CBS permanecem null (em branco).
 
                 parsedItems.push({
                     id: i + 1,
@@ -616,7 +625,18 @@
 
         function getTagValue(parent, tagName) {
             const el = parent.getElementsByTagName(tagName)[0];
-            return el ? el.textContent : null;
+            if (!el || el.textContent === null || el.textContent === undefined) return null;
+            const txt = el.textContent.trim();
+            return txt === "" ? null : txt;
+        }
+
+        // Retorna número do XML ou null quando a tag não existe/está vazia.
+        // Nunca inventa valor: sem tag = em branco na tela.
+        function getTagNumber(parent, tagName) {
+            const raw = getTagValue(parent, tagName);
+            if (raw === null) return null;
+            const n = parseFloat(raw.replace(",", "."));
+            return isNaN(n) ? null : n;
         }
 
         function renderTable() {
@@ -633,6 +653,9 @@
             parsedItems.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 const fmtNum = (v) => v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                const fmtMoney = (v) => (v === null || v === undefined) ? '<span class="empty-cell">—</span>' : ('R$ ' + fmtNum(v));
+                const fmtAliq = (v) => (v === null || v === undefined) ? '<span class="empty-cell">—</span>' : (v.toFixed(2) + '%');
+                const fmtTxt = (v) => (v === null || v === undefined || v === '') ? '<span class="empty-cell">—</span>' : v;
 
                 tr.innerHTML = `
                     <td class="checkbox-cell">
@@ -644,27 +667,27 @@
                         <div style="font-size: 11px; color: #64748b; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.description}</div>
                     </td>
                     <td class="text-center"><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:11px;">${item.ncm}</code></td>
-                    <td class="text-center"><span class="badge-cst">${item.cst} / ${item.cClassTrib}</span></td>
+                    <td class="text-center"><span class="badge-cst">${fmtTxt(item.cst)} / ${fmtTxt(item.cClassTrib)}</span></td>
                     <td class="text-right" style="color: #475569;">R$ ${fmtNum(item.vProd)}</td>
-                    <td class="text-right"><span class="badge-bc">R$ ${fmtNum(item.vBC)}</span></td>
+                    <td class="text-right">${item.vBC === null ? '<span class="empty-cell">—</span>' : `<span class="badge-bc">R$ ${fmtNum(item.vBC)}</span>`}</td>
                     
                     <!-- Clean IBS Column grouping -->
                     <td class="text-center">
-                        <div><strong style="color: #b45309;">${item.pIBSUF.toFixed(2)}%</strong> <span style="font-size:10px; color:#94a3b8;">UF</span></div>
-                        <div style="font-size: 11px; color: #64748b;">${item.pIBSMun.toFixed(2)}% <span style="font-size:10px; color:#94a3b8;">Mun</span></div>
+                        <div><strong style="color: #b45309;">${fmtAliq(item.pIBSUF)}</strong> <span style="font-size:10px; color:#94a3b8;">UF</span></div>
+                        <div style="font-size: 11px; color: #64748b;">${fmtAliq(item.pIBSMun)} <span style="font-size:10px; color:#94a3b8;">Mun</span></div>
                     </td>
                     <td class="text-right">
-                        <div>R$ ${fmtNum(item.vIBSUF)}</div>
-                        <div style="font-size: 11px; color: #94a3b8;">R$ ${fmtNum(item.vIBSMun)}</div>
+                        <div>${fmtMoney(item.vIBSUF)}</div>
+                        <div style="font-size: 11px; color: #94a3b8;">${fmtMoney(item.vIBSMun)}</div>
                     </td>
                     <td class="text-right" style="font-weight: 800; color: #b45309; background-color: #fefce8;">
-                        R$ ${fmtNum(item.vIBSTotal)}
+                        ${fmtMoney(item.vIBSTotal)}
                     </td>
 
                     <!-- CBS Column -->
-                    <td class="text-center"><span style="color: #0369a1; font-weight: 700;">${item.pCBS.toFixed(2)}%</span></td>
+                    <td class="text-center"><span style="color: #0369a1; font-weight: 700;">${fmtAliq(item.pCBS)}</span></td>
                     <td class="text-right" style="font-weight: 700; color: #0369a1; background-color: #f0f9ff;">
-                        R$ ${fmtNum(item.vCBS)}
+                        ${fmtMoney(item.vCBS)}
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -693,9 +716,9 @@
             parsedItems.forEach(item => {
                 if (item.selected) {
                     totalProd += item.vProd;
-                    totalBC += item.vBC;
-                    totalCBS += item.vCBS;
-                    totalIBS += item.vIBSTotal;
+                    totalBC += item.vBC ?? 0;
+                    totalCBS += item.vCBS ?? 0;
+                    totalIBS += item.vIBSTotal ?? 0;
                 }
             });
 
@@ -719,8 +742,9 @@
             let csv = "Item;Codigo;Descricao;NCM;CST;cClassTrib;Valor_Produto;BC_IBSCBS;Aliq_IBS_UF;VLR_IBS_UF;Aliq_IBS_Mun;VLR_IBS_Mun;VLR_IBS_Total;Aliq_CBS;VLR_CBS\n";
 
             parsedItems.filter(i => i.selected).forEach(item => {
-                const fmt = (n) => n.toString().replace('.',',');
-                csv += `${item.id};"${item.code}";"${item.description}";"${item.ncm}";"${item.cst}";"${item.cClassTrib}";${fmt(item.vProd)};${fmt(item.vBC)};${fmt(item.pIBSUF)};${fmt(item.vIBSUF)};${fmt(item.pIBSMun)};${fmt(item.vIBSMun)};${fmt(item.vIBSTotal)};${fmt(item.pCBS)};${fmt(item.vCBS)}\n`;
+                const fmt = (n) => (n === null || n === undefined) ? '' : n.toString().replace('.',',');
+                const txt = (v) => (v === null || v === undefined) ? '' : `"${v}"`;
+                csv += `${item.id};"${item.code}";"${item.description}";"${item.ncm}";${txt(item.cst)};${txt(item.cClassTrib)};${fmt(item.vProd)};${fmt(item.vBC)};${fmt(item.pIBSUF)};${fmt(item.vIBSUF)};${fmt(item.pIBSMun)};${fmt(item.vIBSMun)};${fmt(item.vIBSTotal)};${fmt(item.pCBS)};${fmt(item.vCBS)}\n`;
             });
 
             const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
