@@ -7,7 +7,7 @@
 
 ## 📌 Visão Geral
 
-O **AnalisaXML Tributário** (`site_extrator_xml_limpo.html`) é uma solução web *Client-Side* desenvolvida para realizar a leitura, apuração e auditoria de arquivos XML de Nota Fiscal Eletrônica (NF-e) sob a perspectiva da **Reforma Tributária brasileira (Emenda Constitucional nº 132/2023)**.
+O **AnalisaXML Tributário** é uma solução web *Client-Side* desenvolvida para realizar a leitura, apuração e auditoria de arquivos XML de Nota Fiscal Eletrônica (NF-e) sob a perspectiva da **Reforma Tributária brasileira (Emenda Constitucional nº 132/2023)**.
 
 A ferramenta segrega e calcula detalhadamente os novos impostos incidentes:
 - **IBS (Imposto sobre Bens e Serviços):** Dividido entre alíquotas e valores Estaduais (UF) e Municipais (Mun).
