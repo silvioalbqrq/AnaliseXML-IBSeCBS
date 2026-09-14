@@ -374,6 +374,46 @@
             color: var(--text-muted);
             font-size: 12px;
         }
+
+        .footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media print {
+            .upload-section,
+            .action-buttons,
+            .checkbox-cell {
+                display: none !important;
+            }
+            .header {
+                box-shadow: none;
+                padding: 12px 16px;
+            }
+            .container {
+                margin: 0;
+                padding: 0 8px;
+                max-width: 100%;
+            }
+            .action-bar {
+                border-radius: 0;
+            }
+            .table-container {
+                box-shadow: none;
+                overflow: visible;
+            }
+            body {
+                background-color: #fff;
+            }
+            .footer {
+                margin-top: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -442,6 +482,7 @@
                 <button class="btn-action" onclick="toggleSelectAll(true)">Marcar Todos</button>
                 <button class="btn-action" onclick="toggleSelectAll(false)">Desmarcar Todos</button>
                 <button class="btn-action btn-export" onclick="exportToCSV()">📥 Exportar CSV</button>
+                <button class="btn-action" onclick="window.print()">🖨️ Imprimir</button>
             </div>
         </div>
 
@@ -486,6 +527,7 @@
 
         <footer class="footer">
             <p>Leitor e Extrator Tributário — Reforma Tributária (EC 132/2023)</p>
+            <p style="margin-top: 6px;">Entre em contato: <a href="mailto:silvio.albqrq@gmail.com">silvio.albqrq@gmail.com</a></p>
         </footer>
     </div>
 
