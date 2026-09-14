@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnalisaXML Tributário - Layout Limpo</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-header: #111827;
+            --card-dark: #1e293b;
+            --card-light: #ffffff;
+            --text-light: #f8fafc;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --accent-green: #00e676;
+            --accent-green-dark: #00c853;
+            --accent-blue: #3b82f6;
+            --badge-purple: #f3e8ff;
+            --text-purple: #6b21a8;
+            --badge-ibs: #fef3c7;
+            --text-ibs: #92400e;
+            --badge-cbs: #e0f2fe;
+            --text-cbs: #0369a1;
+            --border-color: #e2e8f0;
+            --bg-body: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        /* Top Header Navigation / Banner */
+        .header {
+            background-color: var(--bg-header);
+            color: var(--text-light);
+            padding: 24px 32px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .pill-tag {
+            background-color: var(--accent-blue);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 16px;
+        }
+
+        .stat-card {
+            background-color: var(--card-dark);
+            border: 1px solid #334155;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-align: right;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-green);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+
+        /* Upload Area */
+        .upload-section {
+            background-color: var(--card-dark);
+            border: 2px dashed var(--accent-blue);
+            border-radius: 12px;
+            padding: 28px;
+            text-align: center;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 24px;
+        }
+
+        .upload-section:hover, .upload-section.dragover {
+            background-color: #1e293b;
+            border-color: var(--accent-green);
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            color: var(--accent-green);
+        }
+
+        .upload-btn {
+            background-color: var(--accent-green);
+            color: #000;
+            font-weight: 700;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-block;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .upload-btn:hover {
+            background-color: var(--accent-green-dark);
+            color: white;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Summary Cards Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background-color: var(--card-light);
+            border-radius: 10px;
+            padding: 16px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            border-top: 3px solid var(--text-muted);
+            position: relative;
+        }
+
+        .card.highlight {
+            border-top: 3px solid var(--accent-green);
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+        }
+
+        .card-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .card-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .card-desc {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            background-color: var(--card-dark);
+            color: var(--text-light);
+            padding: 14px 20px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .action-bar h3 {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action {
+            background-color: #334155;
+            color: white;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-action:hover {
+            background-color: #475569;
+        }
+
+        .btn-export {
+            background-color: var(--accent-green);
+            color: #052e16;
+        }
+
+        .btn-export:hover {
+            background-color: var(--accent-green-dark);
+            color: white;
+        }
+
+        /* Clean & Elegant Table Styling */
+        .table-container {
+            background-color: var(--card-light);
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        /* Group Headers */
+        thead tr.group-header th {
+            background-color: #1e293b;
+            color: #94a3b8;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 8px 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        thead tr.group-header th.gh-item { color: #f8fafc; }
+        thead tr.group-header th.gh-bc { color: #4ade80; }
+        thead tr.group-header th.gh-ibs { color: #fde047; }
+        thead tr.group-header th.gh-cbs { color: #38bdf8; }
+
+        /* Column Headers */
+        thead tr.col-header th {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 11px;
+            padding: 10px 12px;
+            white-space: nowrap;
+            border-bottom: 2px solid #334155;
+        }
+
+        tbody td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        /* Subtle Badges */
+        .badge-cst {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .badge-bc {
+            font-weight: 700;
+            color: #15803d;
+            background-color: #f0fdf4;
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .sub-details {
+            font-size: 11px;
+            color: #64748b;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 2px;
+        }
+
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
+        }
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--accent-green);
+        }
+
+        .empty-state {
+            padding: 48px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="header">
+        <div class="header-top">
+            <span class="pill-tag">Reforma Tributária EC 132/2023 • Leitor de XML</span>
+            <div class="header-stats">
+                <div class="stat-card">
+                    <div class="stat-label">IBS Total (UF + Mun)</div>
+                    <div class="stat-value" id="hdrIbsTotal">R$ 0,00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">CBS Total (Federal)</div>
+                    <div class="stat-value" id="hdrCbsTotal" style="color: #38bdf8;">R$ 0,00</div>
+                </div>
+            </div>
+        </div>
+        <h1 class="title">AnalisaXML Tributário: IBS e CBS</h1>
+        <p class="subtitle">Visualização clara e organizada de itens, Base de Cálculo (&lt;vBC&gt;), IBS e CBS</p>
+    </header>
+
+    <div class="container">
+
+        <!-- File Upload Area -->
+        <div class="upload-section" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📁</div>
+            <h2 style="font-size: 18px; font-weight: 700;">Arraste e solte o XML da NF-e aqui</h2>
+            <p style="margin-top: 4px; color: #94a3b8; font-size: 13px;">Ou clique para selecionar o arquivo no seu computador</p>
+            <button class="upload-btn">Selecionar Arquivo XML</button>
+            <input type="file" id="fileInput" accept=".xml">
+        </div>
+
+        <!-- Summary Grid Cards -->
+        <div class="summary-grid">
+            <div class="card">
+                <div class="card-title">Total dos Produtos (vProd)</div>
+                <div class="card-value" id="lblTotalProd">R$ 0,00</div>
+                <div class="card-desc">Soma do valor nominal dos itens</div>
+            </div>
+
+            <div class="card highlight">
+                <div class="card-title" style="color: #15803d;">Base de Cálculo IBS/CBS (&lt;vBC&gt;)</div>
+                <div class="card-value" id="lblTotalBC" style="color: #166534;">R$ 0,00</div>
+                <div class="card-desc">Extraído da tag especifica do XML</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Total IBS (Estadual + Municipal)</div>
+                <div class="card-value" id="lblTotalIBS" style="color: #b45309;">R$ 0,00</div>
+                <div class="card-desc">Soma de IBS UF + IBS Mun</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Total CBS (Federal)</div>
+                <div class="card-value" id="lblTotalCBS" style="color: #0369a1;">R$ 0,00</div>
+                <div class="card-desc">Contribuição sobre Bens e Serviços</div>
+            </div>
+        </div>
+
+        <!-- Clean Action Bar -->
+        <div class="action-bar">
+            <h3>🛒 Itens da Nota Fiscal <span id="itemCountTag" style="font-size: 12px; color: #94a3b8; font-weight: normal;">(0 itens)</span></h3>
+            <div class="action-buttons">
+                <button class="btn-action" onclick="toggleSelectAll(true)">Marcar Todos</button>
+                <button class="btn-action" onclick="toggleSelectAll(false)">Desmarcar Todos</button>
+                <button class="btn-action btn-export" onclick="exportToCSV()">📥 Exportar CSV</button>
+            </div>
+        </div>
+
+        <!-- Clean Table View with Group Headers -->
+        <div class="table-container">
+            <table id="itemsTable">
+                <thead>
+                    <!-- Group Header Row for visual organization -->
+                    <tr class="group-header">
+                        <th colspan="5" class="gh-item">1. Identificação do Produto</th>
+                        <th colspan="2" class="gh-bc text-right">2. Valoração & BC</th>
+                        <th colspan="3" class="gh-ibs text-center">3. IBS (Estadual / Municipal)</th>
+                        <th colspan="2" class="gh-cbs text-center">4. CBS (Federal)</th>
+                    </tr>
+                    <!-- Detailed Column Headers -->
+                    <tr class="col-header">
+                        <th class="checkbox-cell"><input type="checkbox" id="selectAll" checked onchange="toggleSelectAll(this.checked)"></th>
+                        <th class="text-center">#</th>
+                        <th>Código / Descrição</th>
+                        <th class="text-center">NCM</th>
+                        <th class="text-center">CST / ClassTrib</th>
+                        <th class="text-right">Vlr. Produto</th>
+                        <th class="text-right">BC IBS/CBS (&lt;vBC&gt;)</th>
+                        <!-- IBS -->
+                        <th class="text-center">Alíq. UF / Mun</th>
+                        <th class="text-right">Vlr. UF / Mun</th>
+                        <th class="text-right" style="color: #fde047;">Vlr. IBS Total</th>
+                        <!-- CBS -->
+                        <th class="text-center">Alíq. CBS</th>
+                        <th class="text-right" style="color: #38bdf8;">Vlr. CBS</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="12" class="empty-state">
+                            Nenhum arquivo XML carregado ainda. Faça o upload acima para analisar a nota fiscal.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="footer">
+            <p>Leitor e Extrator Tributário — Reforma Tributária (EC 132/2023)</p>
+        </footer>
+    </div>
+
+    <script>
+        let parsedItems = [];
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                parseXML(e.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseXML(xmlText) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+            const dets = xmlDoc.getElementsByTagName("det");
+            if (!dets || dets.length === 0) {
+                alert("Nenhum item (<det>) encontrado no arquivo XML.");
+                return;
+            }
+
+            parsedItems = [];
+
+            for (let i = 0; i < dets.length; i++) {
+                const det = dets[i];
+                const prod = det.getElementsByTagName("prod")[0];
+                if (!prod) continue;
+
+                const cProd = getTagValue(prod, "cProd") || (i + 1);
+                const xProd = getTagValue(prod, "xProd") || "Produto sem descrição";
+                const ncm = getTagValue(prod, "NCM") || "-";
+                const vProd = parseFloat(getTagValue(prod, "vProd") || "0");
+
+                let cst = "-";
+                let cClassTrib = "-";
+                let vBC_IBSCBS = vProd;
+                let pCBS = 0.90;
+                let vCBS = 0;
+                let pIBSUF = 0.10;
+                let vIBSUF = 0;
+                let pIBSMun = 0.00;
+                let vIBSMun = 0;
+
+                const ibscbsNode = det.getElementsByTagName("IBSCBS")[0];
+                if (ibscbsNode) {
+                    cst = getTagValue(ibscbsNode, "CST") || "-";
+                    cClassTrib = getTagValue(ibscbsNode, "cClassTrib") || "-";
+
+                    const gIBSCBS = ibscbsNode.getElementsByTagName("gIBSCBS")[0];
+                    if (gIBSCBS) {
+                        const vbcVal = getTagValue(gIBSCBS, "vBC");
+                        if (vbcVal !== null) vBC_IBSCBS = parseFloat(vbcVal);
+
+                        // gIBSUF
+                        const gIBSUF = gIBSCBS.getElementsByTagName("gIBSUF")[0];
+                        if (gIBSUF) {
+                            pIBSUF = parseFloat(getTagValue(gIBSUF, "pIBSUF") || "0");
+                            vIBSUF = parseFloat(getTagValue(gIBSUF, "vIBSUF") || "0");
+                        }
+
+                        // gIBSMun
+                        const gIBSMun = gIBSCBS.getElementsByTagName("gIBSMun")[0];
+                        if (gIBSMun) {
+                            pIBSMun = parseFloat(getTagValue(gIBSMun, "pIBSMun") || "0");
+                            vIBSMun = parseFloat(getTagValue(gIBSMun, "vIBSMun") || "0");
+                        }
+
+                        // gCBS
+                        const gCBS = gIBSCBS.getElementsByTagName("gCBS")[0];
+                        if (gCBS) {
+                            pCBS = parseFloat(getTagValue(gCBS, "pCBS") || "0");
+                            vCBS = parseFloat(getTagValue(gCBS, "vCBS") || "0");
+                        }
+                    }
+                } else {
+                    vCBS = vBC_IBSCBS * (pCBS / 100);
+                    vIBSUF = vBC_IBSCBS * (pIBSUF / 100);
+                    vIBSMun = vBC_IBSCBS * (pIBSMun / 100);
+                }
+
+                const vIBSTotal = vIBSUF + vIBSMun;
+
+                parsedItems.push({
+                    id: i + 1,
+                    code: cProd,
+                    description: xProd,
+                    ncm: ncm,
+                    cst: cst,
+                    cClassTrib: cClassTrib,
+                    vProd: vProd,
+                    vBC: vBC_IBSCBS,
+                    pIBSUF: pIBSUF,
+                    vIBSUF: vIBSUF,
+                    pIBSMun: pIBSMun,
+                    vIBSMun: vIBSMun,
+                    vIBSTotal: vIBSTotal,
+                    pCBS: pCBS,
+                    vCBS: vCBS,
+                    selected: true
+                });
+            }
+
+            renderTable();
+        }
+
+        function getTagValue(parent, tagName) {
+            const el = parent.getElementsByTagName(tagName)[0];
+            return el ? el.textContent : null;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (parsedItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="12" class="empty-state">Nenhum item encontrado no XML.</td></tr>`;
+                return;
+            }
+
+            document.getElementById('itemCountTag').innerText = `(${parsedItems.length} itens carregados)`;
+
+            parsedItems.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const fmtNum = (v) => v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+                tr.innerHTML = `
+                    <td class="checkbox-cell">
+                        <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleItem(${index}, this.checked)">
+                    </td>
+                    <td class="text-center" style="color: #64748b; font-weight: 600;">${item.id}</td>
+                    <td>
+                        <div style="font-weight: 700; color: #0f172a;">${item.code}</div>
+                        <div style="font-size: 11px; color: #64748b; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.description}</div>
+                    </td>
+                    <td class="text-center"><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:11px;">${item.ncm}</code></td>
+                    <td class="text-center"><span class="badge-cst">${item.cst} / ${item.cClassTrib}</span></td>
+                    <td class="text-right" style="color: #475569;">R$ ${fmtNum(item.vProd)}</td>
+                    <td class="text-right"><span class="badge-bc">R$ ${fmtNum(item.vBC)}</span></td>
+                    
+                    <!-- Clean IBS Column grouping -->
+                    <td class="text-center">
+                        <div><strong style="color: #b45309;">${item.pIBSUF.toFixed(2)}%</strong> <span style="font-size:10px; color:#94a3b8;">UF</span></div>
+                        <div style="font-size: 11px; color: #64748b;">${item.pIBSMun.toFixed(2)}% <span style="font-size:10px; color:#94a3b8;">Mun</span></div>
+                    </td>
+                    <td class="text-right">
+                        <div>R$ ${fmtNum(item.vIBSUF)}</div>
+                        <div style="font-size: 11px; color: #94a3b8;">R$ ${fmtNum(item.vIBSMun)}</div>
+                    </td>
+                    <td class="text-right" style="font-weight: 800; color: #b45309; background-color: #fefce8;">
+                        R$ ${fmtNum(item.vIBSTotal)}
+                    </td>
+
+                    <!-- CBS Column -->
+                    <td class="text-center"><span style="color: #0369a1; font-weight: 700;">${item.pCBS.toFixed(2)}%</span></td>
+                    <td class="text-right" style="font-weight: 700; color: #0369a1; background-color: #f0f9ff;">
+                        R$ ${fmtNum(item.vCBS)}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            calculateTotals();
+        }
+
+        function toggleItem(index, isChecked) {
+            parsedItems[index].selected = isChecked;
+            calculateTotals();
+        }
+
+        function toggleSelectAll(checked) {
+            parsedItems.forEach(item => item.selected = checked);
+            document.getElementById('selectAll').checked = checked;
+            renderTable();
+        }
+
+        function calculateTotals() {
+            let totalProd = 0;
+            let totalBC = 0;
+            let totalCBS = 0;
+            let totalIBS = 0;
+
+            parsedItems.forEach(item => {
+                if (item.selected) {
+                    totalProd += item.vProd;
+                    totalBC += item.vBC;
+                    totalCBS += item.vCBS;
+                    totalIBS += item.vIBSTotal;
+                }
+            });
+
+            const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            document.getElementById('lblTotalProd').innerText = fmt(totalProd);
+            document.getElementById('lblTotalBC').innerText = fmt(totalBC);
+            document.getElementById('lblTotalIBS').innerText = fmt(totalIBS);
+            document.getElementById('lblTotalCBS').innerText = fmt(totalCBS);
+
+            document.getElementById('hdrIbsTotal').innerText = fmt(totalIBS);
+            document.getElementById('hdrCbsTotal').innerText = fmt(totalCBS);
+        }
+
+        function exportToCSV() {
+            if (parsedItems.length === 0) {
+                alert("Nenhum dado para exportar.");
+                return;
+            }
+
+            let csv = "Item;Codigo;Descricao;NCM;CST;cClassTrib;Valor_Produto;BC_IBSCBS;Aliq_IBS_UF;VLR_IBS_UF;Aliq_IBS_Mun;VLR_IBS_Mun;VLR_IBS_Total;Aliq_CBS;VLR_CBS\n";
+
+            parsedItems.filter(i => i.selected).forEach(item => {
+                const fmt = (n) => n.toString().replace('.',',');
+                csv += `${item.id};"${item.code}";"${item.description}";"${item.ncm}";"${item.cst}";"${item.cClassTrib}";${fmt(item.vProd)};${fmt(item.vBC)};${fmt(item.pIBSUF)};${fmt(item.vIBSUF)};${fmt(item.pIBSMun)};${fmt(item.vIBSMun)};${fmt(item.vIBSTotal)};${fmt(item.pCBS)};${fmt(item.vCBS)}\n`;
+            });
+
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "Extracao_IBS_CBS_Clean.csv";
+            a.click();
+        }
+    </script>
+</body>
+</html>
