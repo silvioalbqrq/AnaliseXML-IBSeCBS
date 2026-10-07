@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise do XML do IBS/CBS</title>
+    <title>Análise do XML do IBS/CBS — Lote 55/65</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -16,786 +17,652 @@
             --accent-green: #00e676;
             --accent-green-dark: #00c853;
             --accent-blue: #3b82f6;
-            --badge-purple: #f3e8ff;
-            --text-purple: #6b21a8;
-            --badge-ibs: #fef3c7;
-            --text-ibs: #92400e;
-            --badge-cbs: #e0f2fe;
-            --text-cbs: #0369a1;
             --border-color: #e2e8f0;
             --bg-body: #f8fafc;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-dark);
-            min-height: 100vh;
-        }
-
-        /* Top Header Navigation / Banner */
-        .header {
-            background-color: var(--bg-header);
-            color: var(--text-light);
-            padding: 24px 32px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-        }
-
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .pill-tag {
-            background-color: var(--accent-blue);
-            color: white;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .title {
-            font-size: 24px;
-            font-weight: 800;
-            color: #ffffff;
-            margin-bottom: 4px;
-        }
-
-        .subtitle {
-            color: #94a3b8;
-            font-size: 13px;
-        }
-
-        .header-stats {
-            display: flex;
-            gap: 16px;
-        }
-
-        .stat-card {
-            background-color: var(--card-dark);
-            border: 1px solid #334155;
-            padding: 8px 16px;
-            border-radius: 8px;
-            text-align: right;
-        }
-
-        .stat-label {
-            font-size: 10px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-value {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--accent-green);
-        }
-
-        /* Main Container */
-        .container {
-            max-width: 1400px;
-            margin: 24px auto;
-            padding: 0 24px;
-        }
-
-        /* Upload Area */
-        .upload-section {
-            background-color: var(--card-dark);
-            border: 2px dashed var(--accent-blue);
-            border-radius: 12px;
-            padding: 28px;
-            text-align: center;
-            color: var(--text-light);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-bottom: 24px;
-        }
-
-        .upload-section:hover, .upload-section.dragover {
-            background-color: #1e293b;
-            border-color: var(--accent-green);
-        }
-
-        .upload-icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-            color: var(--accent-green);
-        }
-
-        .upload-btn {
-            background-color: var(--accent-green);
-            color: #000;
-            font-weight: 700;
-            padding: 8px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 10px;
-            display: inline-block;
-            font-size: 13px;
-            transition: background 0.2s;
-        }
-
-        .upload-btn:hover {
-            background-color: var(--accent-green-dark);
-            color: white;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        /* Summary Cards Grid */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .card {
-            background-color: var(--card-light);
-            border-radius: 10px;
-            padding: 16px 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid var(--border-color);
-            border-top: 3px solid var(--text-muted);
-            position: relative;
-        }
-
-        .card.highlight {
-            border-top: 3px solid var(--accent-green);
-            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
-        }
-
-        .card-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-
-        .card-value {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--text-dark);
-        }
-
-        .card-desc {
-            font-size: 11px;
-            color: #64748b;
-            margin-top: 4px;
-        }
-
-        /* Action Bar */
-        .action-bar {
-            background-color: var(--card-dark);
-            color: var(--text-light);
-            padding: 14px 20px;
-            border-radius: 10px 10px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .action-bar h3 {
-            font-size: 15px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-action {
-            background-color: #334155;
-            color: white;
-            border: none;
-            padding: 7px 14px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-action:hover {
-            background-color: #475569;
-        }
-
-        .btn-export {
-            background-color: var(--accent-green);
-            color: #052e16;
-        }
-
-        .btn-export:hover {
-            background-color: var(--accent-green-dark);
-            color: white;
-        }
-
-        /* Clean & Elegant Table Styling */
-        .table-container {
-            background-color: var(--card-light);
-            border-radius: 0 0 10px 10px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            border: 1px solid var(--border-color);
-            border-top: none;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 13px;
-        }
-
-        /* Group Headers */
-        thead tr.group-header th {
-            background-color: #1e293b;
-            color: #94a3b8;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            padding: 8px 12px;
-            border-bottom: 1px solid #334155;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-dark); min-height: 100vh; }
+        .header { background-color: var(--bg-header); color: var(--text-light); padding: 24px 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 12px; }
+        .pill-tag { background-color: var(--accent-blue); color: white; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .title { font-size: 24px; font-weight: 800; color: #ffffff; margin-bottom: 4px; }
+        .subtitle { color: #94a3b8; font-size: 13px; }
+        .header-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+        .stat-card { background-color: var(--card-dark); border: 1px solid #334155; padding: 8px 16px; border-radius: 8px; text-align: right; }
+        .stat-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 18px; font-weight: 800; color: var(--accent-green); }
+        .container { max-width: 1500px; margin: 24px auto; padding: 0 24px; }
+        .upload-section { background-color: var(--card-dark); border: 2px dashed var(--accent-blue); border-radius: 12px; padding: 24px; text-align: center; color: var(--text-light); margin-bottom: 16px; }
+        .upload-section.dragover { border-color: var(--accent-green); background-color: #16213a; }
+        .upload-icon { font-size: 32px; margin-bottom: 8px; }
+        .upload-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+        .upload-btn { background-color: var(--accent-green); color: #000; font-weight: 700; padding: 9px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .upload-btn.secondary { background-color: #334155; color: #fff; }
+        .upload-btn:hover { filter: brightness(1.1); }
+        .hidden-input { display: none; }
+        .files-panel { background: #fff; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; }
+        .files-panel h4 { font-size: 13px; margin-bottom: 8px; }
+        .file-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .file-chip { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 20px; padding: 4px 8px 4px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+        .file-chip .mod-badge { background: #0f172a; color: #fff; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700; }
+        .file-chip button { border: none; background: #ef4444; color: #fff; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 11px; line-height: 1; }
+        .error-box { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 8px; padding: 10px 14px; font-size: 12px; margin-bottom: 16px; display: none; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .card { background-color: var(--card-light); border-radius: 10px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-top: 3px solid var(--text-muted); }
+        .card.highlight { border-top: 3px solid var(--accent-green); background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%); }
+        .card-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+        .card-value { font-size: 20px; font-weight: 800; }
+        .card-desc { font-size: 11px; color: #64748b; margin-top: 4px; }
+        .toolbar { background-color: var(--card-dark); color: var(--text-light); padding: 12px 16px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .toolbar h3 { font-size: 14px; font-weight: 700; }
+        .toolbar .filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .toolbar input[type="text"], .toolbar select { padding: 7px 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 12px; }
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-action { background-color: #334155; color: white; border: none; padding: 7px 12px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; }
+        .btn-action:hover { background-color: #475569; }
+        .btn-export { background-color: var(--accent-green); color: #052e16; }
+        .btn-danger { background-color: #7f1d1d; }
+        .table-container { background-color: var(--card-light); border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-top: none; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; min-width: 1350px; }
+        thead tr.group-header th { background-color: #1e293b; color: #94a3b8; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 10px; border-bottom: 1px solid #334155; }
         thead tr.group-header th.gh-item { color: #f8fafc; }
+        thead tr.group-header th.gh-icms { color: #fda4af; }
         thead tr.group-header th.gh-bc { color: #4ade80; }
         thead tr.group-header th.gh-ibs { color: #fde047; }
         thead tr.group-header th.gh-cbs { color: #38bdf8; }
-
-        /* Column Headers */
-        thead tr.col-header th {
-            background-color: #0f172a;
-            color: #e2e8f0;
-            font-weight: 600;
-            font-size: 11px;
-            padding: 10px 12px;
-            white-space: nowrap;
-            border-bottom: 2px solid #334155;
-        }
-
-        tbody td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-dark);
-            vertical-align: middle;
-        }
-
-        tbody tr:nth-child(even) {
-            background-color: #f8fafc;
-        }
-
-        tbody tr:hover {
-            background-color: #f1f5f9;
-        }
-
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-
-        /* Subtle Badges */
-        .badge-cst {
-            background-color: #f1f5f9;
-            color: #475569;
-            border: 1px solid #cbd5e1;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 11px;
-        }
-
-        .badge-bc {
-            font-weight: 700;
-            color: #15803d;
-            background-color: #f0fdf4;
-            padding: 4px 8px;
-            border-radius: 6px;
-            display: inline-block;
-        }
-
-        .sub-details {
-            font-size: 11px;
-            color: #64748b;
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-            margin-top: 2px;
-        }
-
-        .checkbox-cell {
-            width: 40px;
-            text-align: center;
-        }
-
-        input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            accent-color: var(--accent-green);
-        }
-
-        .empty-cell {
-            color: #cbd5e1;
-            font-weight: 400;
-        }
-
-        .empty-state {
-            padding: 48px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 32px;
-            padding: 20px;
-            color: var(--text-muted);
-            font-size: 12px;
-        }
-
-        .footer a {
-            color: var(--accent-blue);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        @media print {
-            .upload-section,
-            .action-buttons,
-            .checkbox-cell {
-                display: none !important;
-            }
-            .header {
-                box-shadow: none;
-                padding: 12px 16px;
-            }
-            .container {
-                margin: 0;
-                padding: 0 8px;
-                max-width: 100%;
-            }
-            .action-bar {
-                border-radius: 0;
-            }
-            .table-container {
-                box-shadow: none;
-                overflow: visible;
-            }
-            body {
-                background-color: #fff;
-            }
-            .footer {
-                margin-top: 12px;
-            }
-        }
+        thead tr.col-header th { background-color: #0f172a; color: #e2e8f0; font-weight: 600; font-size: 11px; padding: 9px 10px; white-space: nowrap; border-bottom: 2px solid #334155; }
+        tbody td { padding: 10px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        tbody tr:nth-child(even) { background-color: #f8fafc; }
+        tbody tr:hover { background-color: #f1f5f9; }
+        .text-right { text-align: right; } .text-center { text-align: center; }
+        .badge-cst { background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; white-space: nowrap; }
+        .badge-icms { background-color: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; white-space: nowrap; }
+        .badge-bc { font-weight: 700; color: #15803d; background-color: #f0fdf4; padding: 3px 7px; border-radius: 6px; display: inline-block; white-space: nowrap; }
+        .empty-cell { color: #cbd5e1; }
+        .empty-state { padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px; }
+        .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: #fff; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 10px 10px; font-size: 12px; flex-wrap: wrap; }
+        .pagination .pages { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .page-btn { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+        .page-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; font-weight: 700; }
+        .page-btn:disabled { opacity: 0.4; cursor: default; }
+        .footer { text-align: center; margin-top: 24px; padding: 20px; color: var(--text-muted); font-size: 12px; }
+        .footer a { color: var(--accent-blue); text-decoration: none; font-weight: 600; }
+        .nf-tag { font-size: 11px; color: #334155; } .nf-tag strong { color: #0f172a; }
+        .legend { background: #fff; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; }
+        .legend summary { cursor: pointer; font-weight: 700; font-size: 13px; }
+        .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 10px; }
+        .legend h5 { font-size: 12px; margin-bottom: 6px; text-transform: uppercase; color: #475569; }
+        .legend table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 0; }
+        .legend td { border-bottom: 1px solid #f1f5f9; padding: 3px 4px; vertical-align: top; }
+        .legend td.code { font-family: monospace; font-weight: 700; white-space: nowrap; width: 44px; }
+        .cst-desc { font-size: 10px; color: #475569; max-width: 180px; line-height: 1.25; margin-top: 2px; }
+        @media print { .upload-section, .action-buttons, .toolbar .filters, .pagination, .files-panel button { display: none !important; } }
     </style>
 </head>
 <body>
-
-    <!-- Header Section -->
     <header class="header">
         <div class="header-top">
-            <span class="pill-tag">Reforma Tributária EC 132/2023 • Leitor de XML</span>
+            <span class="pill-tag">Reforma Tributária EC 132/2023 • Leitor de XML em lote • Modelos 55 e 65</span>
             <div class="header-stats">
-                <div class="stat-card">
-                    <div class="stat-label">IBS Total (UF + Mun)</div>
-                    <div class="stat-value" id="hdrIbsTotal">R$ 0,00</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">CBS Total (Federal)</div>
-                    <div class="stat-value" id="hdrCbsTotal" style="color: #38bdf8;">R$ 0,00</div>
-                </div>
+                <div class="stat-card"><div class="stat-label">IBS Total (UF + Mun)</div><div class="stat-value" id="hdrIbsTotal">R$ 0,00</div></div>
+                <div class="stat-card"><div class="stat-label">CBS Total (Federal)</div><div class="stat-value" id="hdrCbsTotal" style="color:#38bdf8;">R$ 0,00</div></div>
+                <div class="stat-card"><div class="stat-label">ICMS Total</div><div class="stat-value" id="hdrIcmsTotal" style="color:#fda4af;">R$ 0,00</div></div>
             </div>
         </div>
-        <h1 class="title">AnalisaXML Tributário: IBS e CBS</h1>
-        <p class="subtitle">Somente valores do XML (&lt;vBC&gt;, IBS e CBS) — em branco quando a tag não existir</p>
+        <h1 class="title">AnalisaXML Tributário: IBS, CBS e ICMS</h1>
+        <p class="subtitle">Múltiplos XMLs (arquivos, pasta ou .zip) dos modelos 55 (NF-e) e 65 (NFC-e). Somente valores do XML — em branco quando a tag não existir.</p>
     </header>
 
     <div class="container">
-
-        <!-- File Upload Area -->
-        <div class="upload-section" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-section" id="dropZone">
             <div class="upload-icon">📁</div>
-            <h2 style="font-size: 18px; font-weight: 700;">Arraste e solte o XML da NF-e aqui</h2>
-            <p style="margin-top: 4px; color: #94a3b8; font-size: 13px;">Ou clique para selecionar o arquivo no seu computador</p>
-            <button class="upload-btn">Selecionar Arquivo XML</button>
-            <input type="file" id="fileInput" accept=".xml">
+            <h2 style="font-size:18px;font-weight:700;">Arraste e solte XMLs / pasta / .zip aqui</h2>
+            <p style="margin-top:4px;color:#94a3b8;font-size:13px;">Aceita vários arquivos .xml, seleção de pasta ou arquivo .zip com XMLs. Modelos 55 e 65.</p>
+            <div class="upload-row">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click();event.stopPropagation();">Selecionar XMLs</button>
+                <button class="upload-btn secondary" onclick="document.getElementById('folderInput').click();event.stopPropagation();">Selecionar Pasta</button>
+                <button class="upload-btn secondary" onclick="document.getElementById('zipInput').click();event.stopPropagation();">Selecionar .ZIP</button>
+            </div>
+            <input type="file" id="fileInput" class="hidden-input" accept=".xml" multiple>
+            <input type="file" id="folderInput" class="hidden-input" webkitdirectory directory multiple>
+            <input type="file" id="zipInput" class="hidden-input" accept=".zip">
         </div>
 
-        <!-- Summary Grid Cards -->
+        <div class="error-box" id="errorBox"></div>
+
+        <div class="files-panel" id="filesPanel" style="display:none;">
+            <h4>📄 Notas carregadas (<span id="fileCount">0</span>) <span style="color:#64748b;font-weight:normal;">— clique no ✕ para remover a nota e seus itens</span></h4>
+            <div class="file-chips" id="fileChips"></div>
+        </div>
+
+        <details class="legend">
+            <summary>📖 Legenda CST / CSOSN do ICMS (origem + situação tributária)</summary>
+            <div class="legend-grid">
+                <div><h5>Origem</h5><table>
+                    <tr><td class="code">0</td><td>Nacional, exceto as indicadas nos códigos 3 a 5</td></tr>
+                    <tr><td class="code">1</td><td>Estrangeira — importação direta, exceto a indicada no código 6</td></tr>
+                    <tr><td class="code">2</td><td>Estrangeira — adquirida no mercado interno, exceto a indicada no código 7</td></tr>
+                    <tr><td class="code">3</td><td>Nacional, mercadoria/bem com conteúdo de importação superior a 40%</td></tr>
+                    <tr><td class="code">4</td><td>Nacional, produção em conformidade com PPB (Dec.-Lei 288/67; Leis 8.248/91, 8.387/91, 10.176/01 e 11.484/07)</td></tr>
+                    <tr><td class="code">5</td><td>Nacional, mercadoria/bem com conteúdo de importação inferior ou igual a 40%</td></tr>
+                    <tr><td class="code">6</td><td>Estrangeira — importação direta, sem similar nacional (lista CAMEX)</td></tr>
+                    <tr><td class="code">7</td><td>Estrangeira — adquirida no mercado interno, sem similar nacional (lista CAMEX)</td></tr>
+                </table></div>
+                <div><h5>CST — regime normal (origem + 2 dígitos)</h5><table>
+                    <tr><td class="code">00</td><td>Tributada integralmente</td></tr>
+                    <tr><td class="code">10</td><td>Tributada e com cobrança do ICMS por ST</td></tr>
+                    <tr><td class="code">20</td><td>Com redução da BC</td></tr>
+                    <tr><td class="code">30</td><td>Isenta/não tributada e com cobrança do ICMS por ST</td></tr>
+                    <tr><td class="code">40</td><td>Isenta</td></tr>
+                    <tr><td class="code">41</td><td>Não tributada</td></tr>
+                    <tr><td class="code">50</td><td>Com suspensão</td></tr>
+                    <tr><td class="code">51</td><td>Com diferimento</td></tr>
+                    <tr><td class="code">60</td><td>ICMS cobrado anteriormente por ST</td></tr>
+                    <tr><td class="code">70</td><td>Com redução da BC e cobrança do ICMS por ST</td></tr>
+                    <tr><td class="code">90</td><td>Outras</td></tr>
+                </table></div>
+                <div><h5>CSOSN — Simples Nacional (origem + 3 dígitos)</h5><table>
+                    <tr><td class="code">101</td><td>Tributada pelo SN com permissão de crédito</td></tr>
+                    <tr><td class="code">102</td><td>Tributada pelo SN sem permissão de crédito</td></tr>
+                    <tr><td class="code">103</td><td>Isenção do ICMS no SN para faixa de receita bruta</td></tr>
+                    <tr><td class="code">201</td><td>Tributada pelo SN com permissão de crédito e com cobrança do ICMS por ST</td></tr>
+                    <tr><td class="code">202</td><td>Tributada pelo SN sem permissão de crédito e com cobrança do ICMS por ST</td></tr>
+                    <tr><td class="code">203</td><td>Isenção do ICMS no SN para faixa de receita bruta e com cobrança do ICMS por ST</td></tr>
+                    <tr><td class="code">300</td><td>Imune</td></tr>
+                    <tr><td class="code">400</td><td>Não tributada pelo SN</td></tr>
+                    <tr><td class="code">500</td><td>ICMS cobrado anteriormente por ST (substituído) ou por antecipação</td></tr>
+                    <tr><td class="code">900</td><td>Outros</td></tr>
+                </table></div>
+            </div>
+        </details>
+
         <div class="summary-grid">
-            <div class="card">
-                <div class="card-title">Total dos Produtos (vProd)</div>
-                <div class="card-value" id="lblTotalProd">R$ 0,00</div>
-                <div class="card-desc">Soma do valor nominal dos itens</div>
-            </div>
-
-            <div class="card highlight">
-                <div class="card-title" style="color: #15803d;">Base de Cálculo IBS/CBS (&lt;vBC&gt;)</div>
-                <div class="card-value" id="lblTotalBC" style="color: #166534;">R$ 0,00</div>
-                <div class="card-desc">Somente valor do XML — em branco se ausente</div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">Total IBS (Estadual + Municipal)</div>
-                <div class="card-value" id="lblTotalIBS" style="color: #b45309;">R$ 0,00</div>
-                <div class="card-desc">Soma de IBS UF + IBS Mun</div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">Total CBS (Federal)</div>
-                <div class="card-value" id="lblTotalCBS" style="color: #0369a1;">R$ 0,00</div>
-                <div class="card-desc">Contribuição sobre Bens e Serviços</div>
-            </div>
+            <div class="card"><div class="card-title">Notas / Itens</div><div class="card-value" id="lblFiles">0 / 0</div><div class="card-desc">Arquivos mod. 55/65 e itens lidos</div></div>
+            <div class="card"><div class="card-title">Total dos Produtos (vProd)</div><div class="card-value" id="lblTotalProd">R$ 0,00</div><div class="card-desc">Soma do valor nominal dos itens</div></div>
+            <div class="card highlight"><div class="card-title" style="color:#15803d;">Base de Cálculo IBS/CBS (&lt;vBC&gt;)</div><div class="card-value" id="lblTotalBC" style="color:#166534;">R$ 0,00</div><div class="card-desc">Somente valor do XML — em branco se ausente</div></div>
+            <div class="card"><div class="card-title">Total ICMS (vICMS)</div><div class="card-value" id="lblTotalICMS" style="color:#9f1239;">R$ 0,00</div><div class="card-desc">Soma do ICMS próprio dos itens</div></div>
+            <div class="card"><div class="card-title">Total IBS (Estadual + Municipal)</div><div class="card-value" id="lblTotalIBS" style="color:#b45309;">R$ 0,00</div><div class="card-desc">Soma de IBS UF + IBS Mun</div></div>
+            <div class="card"><div class="card-title">Total CBS (Federal)</div><div class="card-value" id="lblTotalCBS" style="color:#0369a1;">R$ 0,00</div><div class="card-desc">Contribuição sobre Bens e Serviços</div></div>
         </div>
 
-        <!-- Clean Action Bar -->
-        <div class="action-bar">
-            <h3>🛒 Itens da Nota Fiscal <span id="itemCountTag" style="font-size: 12px; color: #94a3b8; font-weight: normal;">(0 itens)</span></h3>
+        <div class="toolbar">
+            <h3>🛒 Itens <span id="itemCountTag" style="font-size:12px;color:#94a3b8;font-weight:normal;">(0 itens)</span></h3>
+            <div class="filters">
+                <input type="text" id="searchInput" placeholder="Buscar código, descrição, NCM, CST..." style="min-width:220px;" oninput="onFilterChange()">
+                <select id="modFilter" onchange="onFilterChange()">
+                    <option value="">Modelo: todos</option>
+                    <option value="55">Modelo 55 (NF-e)</option>
+                    <option value="65">Modelo 65 (NFC-e)</option>
+                </select>
+                <select id="pageSize" onchange="onPageSizeChange()">
+                    <option value="20">20/pág.</option>
+                    <option value="50" selected>50/pág.</option>
+                    <option value="100">100/pág.</option>
+                    <option value="200">200/pág.</option>
+                </select>
+            </div>
             <div class="action-buttons">
                 <button class="btn-action" onclick="toggleSelectAll(true)">Marcar Todos</button>
                 <button class="btn-action" onclick="toggleSelectAll(false)">Desmarcar Todos</button>
                 <button class="btn-action btn-export" onclick="exportToCSV()">📥 Exportar CSV</button>
                 <button class="btn-action" onclick="window.print()">🖨️ Imprimir</button>
+                <button class="btn-action btn-danger" onclick="clearAll()">🗑 Limpar</button>
             </div>
         </div>
 
-        <!-- Clean Table View with Group Headers -->
         <div class="table-container">
             <table id="itemsTable">
                 <thead>
-                    <!-- Group Header Row for visual organization -->
                     <tr class="group-header">
-                        <th colspan="5" class="gh-item">1. Identificação do Produto</th>
-                        <th colspan="2" class="gh-bc text-right">2. Valoração & BC</th>
-                        <th colspan="3" class="gh-ibs text-center">3. IBS (Estadual / Municipal)</th>
-                        <th colspan="2" class="gh-cbs text-center">4. CBS (Federal)</th>
+                        <th colspan="5" class="gh-item">1. Identificação / Nota</th>
+                        <th colspan="3" class="gh-icms">2. ICMS (CST / CSOSN)</th>
+                        <th colspan="2" class="gh-bc text-right">3. Valoração & BC</th>
+                        <th colspan="3" class="gh-ibs text-center">4. IBS (UF / Mun)</th>
+                        <th colspan="2" class="gh-cbs text-center">5. CBS (Federal)</th>
                     </tr>
-                    <!-- Detailed Column Headers -->
                     <tr class="col-header">
-                        <th class="checkbox-cell"><input type="checkbox" id="selectAll" checked onchange="toggleSelectAll(this.checked)"></th>
+                        <th class="text-center"><input type="checkbox" id="selectAll" checked onchange="toggleSelectAll(this.checked)"></th>
                         <th class="text-center">#</th>
-                        <th>Código / Descrição</th>
-                        <th class="text-center">NCM</th>
-                        <th class="text-center">CST / ClassTrib</th>
+                        <th>NF / Código / Descrição</th>
+                        <th class="text-center">NCM / CFOP</th>
+                        <th class="text-center">CST ICMS</th>
+                        <th class="text-right">BC ICMS</th>
+                        <th class="text-right">pICMS / vICMS</th>
+                        <th class="text-center">CST IBS / ClassTrib</th>
                         <th class="text-right">Vlr. Produto</th>
-                        <th class="text-right">BC IBS/CBS (&lt;vBC&gt;)</th>
-                        <!-- IBS -->
+                        <th class="text-right">BC IBS/CBS</th>
                         <th class="text-center">Alíq. UF / Mun</th>
                         <th class="text-right">Vlr. UF / Mun</th>
-                        <th class="text-right" style="color: #fde047;">Vlr. IBS Total</th>
-                        <!-- CBS -->
+                        <th class="text-right" style="color:#fde047;">Vlr. IBS Total</th>
                         <th class="text-center">Alíq. CBS</th>
-                        <th class="text-right" style="color: #38bdf8;">Vlr. CBS</th>
+                        <th class="text-right" style="color:#38bdf8;">Vlr. CBS</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr>
-                        <td colspan="12" class="empty-state">
-                            Nenhum arquivo XML carregado ainda. Faça o upload acima para analisar a nota fiscal.
-                        </td>
-                    </tr>
+                    <tr><td colspan="15" class="empty-state">Nenhum arquivo XML carregado ainda. Selecione XMLs, uma pasta ou um .zip acima (modelos 55 e 65).</td></tr>
                 </tbody>
             </table>
         </div>
+        <div class="pagination" id="pagination" style="display:none;">
+            <div id="pageInfo" style="color:#475569;"></div>
+            <div class="pages" id="pageButtons"></div>
+        </div>
 
         <footer class="footer">
-            <p>Leitor e Extrator Tributário — Reforma Tributária (EC 132/2023)</p>
-            <p style="margin-top: 6px;">Entre em contato: <a href="mailto:silvio.albqrq@gmail.com">silvio.albqrq@gmail.com</a></p>
+            <p>Leitor e Extrator Tributário — Reforma Tributária (EC 132/2023) • Lote 55/65 com ICMS + IBS/CBS</p>
+            <p style="margin-top:6px;">Entre em contato: <a href="mailto:silvio.albqrq@gmail.com">silvio.albqrq@gmail.com</a></p>
         </footer>
     </div>
 
-    <script>
-        let parsedItems = [];
+<script>
+let parsedItems = [];
+let loadedFiles = [];
+let loadErrors = [];
+let globalId = 0;
+let currentPage = 1;
 
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const folderInput = document.getElementById('folderInput');
+const zipInput = document.getElementById('zipInput');
 
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) handleFileList(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', (e) => { handleFileList(e.target.files); fileInput.value = ''; });
+folderInput.addEventListener('change', (e) => { handleFileList(e.target.files); folderInput.value = ''; });
+zipInput.addEventListener('change', (e) => { handleFileList(e.target.files); zipInput.value = ''; });
 
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            if (e.dataTransfer.files.length > 0) {
-                fileInput.files = e.dataTransfer.files;
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
-        });
-
-        function handleFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                parseXML(e.target.result);
-            };
-            reader.readAsText(file);
-        }
-
-        function parseXML(xmlText) {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-            const dets = xmlDoc.getElementsByTagName("det");
-            if (!dets || dets.length === 0) {
-                alert("Nenhum item (<det>) encontrado no arquivo XML.");
-                return;
-            }
-
-            parsedItems = [];
-
-            for (let i = 0; i < dets.length; i++) {
-                const det = dets[i];
-                const prod = det.getElementsByTagName("prod")[0];
-                if (!prod) continue;
-
-                const cProd = getTagValue(prod, "cProd") || (i + 1);
-                const xProd = getTagValue(prod, "xProd") || "Produto sem descrição";
-                const ncm = getTagValue(prod, "NCM") || "-";
-                const vProd = getTagNumber(prod, "vProd") ?? 0;
-
-                // Regra: só exibe valor que consta no XML. Sem tag = null = em branco.
-                let cst = null;
-                let cClassTrib = null;
-                let vBC_IBSCBS = null;
-                let pCBS = null;
-                let vCBS = null;
-                let pIBSUF = null;
-                let vIBSUF = null;
-                let pIBSMun = null;
-                let vIBSMun = null;
-                let vIBSTotal = null;
-
-                const ibscbsNode = det.getElementsByTagName("IBSCBS")[0];
-                if (ibscbsNode) {
-                    cst = getTagValue(ibscbsNode, "CST");
-                    cClassTrib = getTagValue(ibscbsNode, "cClassTrib");
-
-                    const gIBSCBS = ibscbsNode.getElementsByTagName("gIBSCBS")[0];
-                    if (gIBSCBS) {
-                        vBC_IBSCBS = getTagNumber(gIBSCBS, "vBC");
-
-                        // gIBSUF — lê apenas tags filhas diretas do grupo
-                        const gIBSUF = gIBSCBS.getElementsByTagName("gIBSUF")[0];
-                        if (gIBSUF) {
-                            pIBSUF = getTagNumber(gIBSUF, "pIBSUF");
-                            vIBSUF = getTagNumber(gIBSUF, "vIBSUF");
-                        }
-
-                        // gIBSMun
-                        const gIBSMun = gIBSCBS.getElementsByTagName("gIBSMun")[0];
-                        if (gIBSMun) {
-                            pIBSMun = getTagNumber(gIBSMun, "pIBSMun");
-                            vIBSMun = getTagNumber(gIBSMun, "vIBSMun");
-                        }
-
-                        // gCBS
-                        const gCBS = gIBSCBS.getElementsByTagName("gCBS")[0];
-                        if (gCBS) {
-                            pCBS = getTagNumber(gCBS, "pCBS");
-                            vCBS = getTagNumber(gCBS, "vCBS");
-                        }
-
-                        // <vIBS> total declarado no XML (quando existir, prevalece)
-                        const vIBSTag = getTagNumber(gIBSCBS, "vIBS");
-                        if (vIBSTag !== null) {
-                            vIBSTotal = vIBSTag;
-                        } else if (vIBSUF !== null || vIBSMun !== null) {
-                            vIBSTotal = (vIBSUF ?? 0) + (vIBSMun ?? 0);
-                        }
-                    }
+async function handleFileList(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    for (const f of files) {
+        const name = (f.name || '').toLowerCase();
+        try {
+            if (name.endsWith('.zip')) {
+                if (typeof JSZip === 'undefined') { loadErrors.push(f.name + ': leitor de ZIP indisponível (sem internet p/ CDN).'); continue; }
+                const zip = await JSZip.loadAsync(f);
+                const entries = Object.values(zip.files).filter(z => !z.dir && z.name.toLowerCase().endsWith('.xml'));
+                if (!entries.length) loadErrors.push(f.name + ': nenhum .xml dentro do ZIP.');
+                for (const entry of entries) {
+                    const text = await entry.async('text');
+                    parseXMLText(text, entry.name.split('/').pop());
                 }
-                // Sem <IBSCBS>: todos os campos IBS/CBS permanecem null (em branco).
-
-                parsedItems.push({
-                    id: i + 1,
-                    code: cProd,
-                    description: xProd,
-                    ncm: ncm,
-                    cst: cst,
-                    cClassTrib: cClassTrib,
-                    vProd: vProd,
-                    vBC: vBC_IBSCBS,
-                    pIBSUF: pIBSUF,
-                    vIBSUF: vIBSUF,
-                    pIBSMun: pIBSMun,
-                    vIBSMun: vIBSMun,
-                    vIBSTotal: vIBSTotal,
-                    pCBS: pCBS,
-                    vCBS: vCBS,
-                    selected: true
-                });
+            } else if (name.endsWith('.xml') || f.type === 'text/xml') {
+                const text = await f.text();
+                parseXMLText(text, f.name);
+            } else {
+                loadErrors.push(f.name + ': ignorado (aceito somente .xml ou .zip).');
             }
-
-            renderTable();
+        } catch (err) {
+            loadErrors.push(f.name + ': falha na leitura (' + (err && err.message ? err.message : err) + ').');
         }
+    }
+    currentPage = 1;
+    renderAll();
+}
 
-        function getTagValue(parent, tagName) {
-            const el = parent.getElementsByTagName(tagName)[0];
-            if (!el || el.textContent === null || el.textContent === undefined) return null;
-            const txt = el.textContent.trim();
-            return txt === "" ? null : txt;
-        }
+function parseXMLText(xmlText, sourceName) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+    if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
+        loadErrors.push(sourceName + ': XML inválido.');
+        return;
+    }
+    const infNFe = xmlDoc.getElementsByTagName('infNFe')[0];
+    const ide = xmlDoc.getElementsByTagName('ide')[0];
+    const mod = ide ? getTagValue(ide, 'mod') : null;
 
-        // Retorna número do XML ou null quando a tag não existe/está vazia.
-        // Nunca inventa valor: sem tag = em branco na tela.
-        function getTagNumber(parent, tagName) {
-            const raw = getTagValue(parent, tagName);
-            if (raw === null) return null;
-            const n = parseFloat(raw.replace(",", "."));
-            return isNaN(n) ? null : n;
-        }
+    if (!infNFe || !ide) {
+        loadErrors.push(sourceName + ': não é NF-e/NFC-e (sem <infNFe>/<ide>). NFS-e e outros modelos são ignorados.');
+        return;
+    }
+    if (mod !== '55' && mod !== '65') {
+        loadErrors.push(sourceName + ': modelo ' + (mod || 'desconhecido') + ' ignorado. Aceitos somente 55 e 65.');
+        return;
+    }
+    const dets = xmlDoc.getElementsByTagName('det');
+    if (!dets || dets.length === 0) {
+        loadErrors.push(sourceName + ' (mod ' + mod + '): nenhum item (<det>) encontrado.');
+        return;
+    }
 
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
+    const nNF = getTagValue(ide, 'nNF') || '-';
+    const serie = getTagValue(ide, 'serie') || '-';
+    const dhEmi = getTagValue(ide, 'dhEmi') || '';
+    const emitNode = xmlDoc.getElementsByTagName('emit')[0];
+    const emitNome = emitNode ? (getTagValue(emitNode, 'xNome') || getTagValue(emitNode, 'xFant') || '-') : '-';
+    const emitDoc = emitNode ? (getTagValue(emitNode, 'CNPJ') || getTagValue(emitNode, 'CPF') || '') : '';
+    let chave = '';
+    if (infNFe && infNFe.getAttribute('Id')) chave = infNFe.getAttribute('Id').replace(/^NFe/, '');
+    const fileId = 'F' + Date.now().toString(36) + '_' + loadedFiles.length;
 
-            if (parsedItems.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" class="empty-state">Nenhum item encontrado no XML.</td></tr>`;
-                return;
+    let added = 0;
+    for (let i = 0; i < dets.length; i++) {
+        const det = dets[i];
+        const prod = det.getElementsByTagName('prod')[0];
+        if (!prod) continue;
+        const cProd = getTagValue(prod, 'cProd') || (i + 1);
+        const xProd = getTagValue(prod, 'xProd') || 'Produto sem descrição';
+        const ncm = getTagValue(prod, 'NCM') || '-';
+        const cfop = getTagValue(prod, 'CFOP') || '-';
+        const vProd = getTagNumber(prod, 'vProd') ?? 0;
+
+        const icms = parseICMS(det);
+
+        let cstIBS = null, cClassTrib = null, vBC_IBSCBS = null;
+        let pCBS = null, vCBS = null, pIBSUF = null, vIBSUF = null, pIBSMun = null, vIBSMun = null, vIBSTotal = null;
+        const ibscbsNode = det.getElementsByTagName('IBSCBS')[0];
+        if (ibscbsNode) {
+            cstIBS = getTagValue(ibscbsNode, 'CST');
+            cClassTrib = getTagValue(ibscbsNode, 'cClassTrib');
+            const g = ibscbsNode.getElementsByTagName('gIBSCBS')[0];
+            if (g) {
+                vBC_IBSCBS = getTagNumber(g, 'vBC');
+                const gU = g.getElementsByTagName('gIBSUF')[0];
+                if (gU) { pIBSUF = getTagNumber(gU, 'pIBSUF'); vIBSUF = getTagNumber(gU, 'vIBSUF'); }
+                const gM = g.getElementsByTagName('gIBSMun')[0];
+                if (gM) { pIBSMun = getTagNumber(gM, 'pIBSMun'); vIBSMun = getTagNumber(gM, 'vIBSMun'); }
+                const gC = g.getElementsByTagName('gCBS')[0];
+                if (gC) { pCBS = getTagNumber(gC, 'pCBS'); vCBS = getTagNumber(gC, 'vCBS'); }
+                const vIBSTag = getTagNumber(g, 'vIBS');
+                if (vIBSTag !== null) vIBSTotal = vIBSTag;
+                else if (vIBSUF !== null || vIBSMun !== null) vIBSTotal = (vIBSUF ?? 0) + (vIBSMun ?? 0);
             }
-
-            document.getElementById('itemCountTag').innerText = `(${parsedItems.length} itens carregados)`;
-
-            parsedItems.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                const fmtNum = (v) => v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                const fmtMoney = (v) => (v === null || v === undefined) ? '<span class="empty-cell">—</span>' : ('R$ ' + fmtNum(v));
-                const fmtAliq = (v) => (v === null || v === undefined) ? '<span class="empty-cell">—</span>' : (v.toFixed(2) + '%');
-                const fmtTxt = (v) => (v === null || v === undefined || v === '') ? '<span class="empty-cell">—</span>' : v;
-
-                tr.innerHTML = `
-                    <td class="checkbox-cell">
-                        <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleItem(${index}, this.checked)">
-                    </td>
-                    <td class="text-center" style="color: #64748b; font-weight: 600;">${item.id}</td>
-                    <td>
-                        <div style="font-weight: 700; color: #0f172a;">${item.code}</div>
-                        <div style="font-size: 11px; color: #64748b; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.description}</div>
-                    </td>
-                    <td class="text-center"><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:11px;">${item.ncm}</code></td>
-                    <td class="text-center"><span class="badge-cst">${fmtTxt(item.cst)} / ${fmtTxt(item.cClassTrib)}</span></td>
-                    <td class="text-right" style="color: #475569;">R$ ${fmtNum(item.vProd)}</td>
-                    <td class="text-right">${item.vBC === null ? '<span class="empty-cell">—</span>' : `<span class="badge-bc">R$ ${fmtNum(item.vBC)}</span>`}</td>
-                    
-                    <!-- Clean IBS Column grouping -->
-                    <td class="text-center">
-                        <div><strong style="color: #b45309;">${fmtAliq(item.pIBSUF)}</strong> <span style="font-size:10px; color:#94a3b8;">UF</span></div>
-                        <div style="font-size: 11px; color: #64748b;">${fmtAliq(item.pIBSMun)} <span style="font-size:10px; color:#94a3b8;">Mun</span></div>
-                    </td>
-                    <td class="text-right">
-                        <div>${fmtMoney(item.vIBSUF)}</div>
-                        <div style="font-size: 11px; color: #94a3b8;">${fmtMoney(item.vIBSMun)}</div>
-                    </td>
-                    <td class="text-right" style="font-weight: 800; color: #b45309; background-color: #fefce8;">
-                        ${fmtMoney(item.vIBSTotal)}
-                    </td>
-
-                    <!-- CBS Column -->
-                    <td class="text-center"><span style="color: #0369a1; font-weight: 700;">${fmtAliq(item.pCBS)}</span></td>
-                    <td class="text-right" style="font-weight: 700; color: #0369a1; background-color: #f0f9ff;">
-                        ${fmtMoney(item.vCBS)}
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            calculateTotals();
         }
 
-        function toggleItem(index, isChecked) {
-            parsedItems[index].selected = isChecked;
-            calculateTotals();
+        parsedItems.push({
+            gid: ++globalId, fileId, fileName: sourceName, mod, nNF, serie, chave, emitNome,
+            nItem: det.getAttribute('nItem') || (i + 1),
+            code: cProd, description: xProd, ncm, cfop, vProd,
+            icmsTipo: icms.tipo, icmsOrig: icms.orig, icmsCST: icms.cstVal, icmsCSTLabel: icms.cstLabel,
+            icmsVBC: icms.vBC, icmsPICMS: icms.pICMS, icmsVICMS: icms.vICMS, icmsVICMSST: icms.vICMSST,
+            cstIBS, cClassTrib, vBC: vBC_IBSCBS,
+            pIBSUF, vIBSUF, pIBSMun, vIBSMun, vIBSTotal, pCBS, vCBS,
+            selected: true
+        });
+        added++;
+    }
+    loadedFiles.push({ fileId, fileName: sourceName, mod, nNF, serie, dhEmi, emitNome, emitDoc, chave, itemCount: added });
+}
+
+function parseICMS(det) {
+    const out = { tipo: null, orig: null, cstVal: null, cstLabel: null, vBC: null, pICMS: null, vICMS: null, vICMSST: null };
+    const icmsParent = det.getElementsByTagName('ICMS')[0];
+    if (!icmsParent) return out;
+    let first = null;
+    for (let k = 0; k < icmsParent.childNodes.length; k++) {
+        if (icmsParent.childNodes[k].nodeType === 1) { first = icmsParent.childNodes[k]; break; }
+    }
+    if (!first) return out;
+    out.tipo = first.tagName || first.nodeName;
+    out.orig = getTagValue(first, 'orig');
+    const cst = getTagValue(first, 'CST');
+    const csosn = getTagValue(first, 'CSOSN');
+    if (cst !== null) { out.cstVal = cst; out.cstLabel = 'CST'; }
+    else if (csosn !== null) { out.cstVal = csosn; out.cstLabel = 'CSOSN'; }
+    out.vBC = getTagNumber(first, 'vBC');
+    out.pICMS = getTagNumber(first, 'pICMS');
+    out.vICMS = getTagNumber(first, 'vICMS');
+    const st1 = getTagNumber(first, 'vICMSSTRet');
+    const st2 = getTagNumber(first, 'vICMSST');
+    out.vICMSST = st1 !== null ? st1 : st2;
+    return out;
+}
+
+function getTagValue(parent, tagName) {
+    if (!parent) return null;
+    const el = parent.getElementsByTagName(tagName)[0];
+    if (!el || el.textContent === null || el.textContent === undefined) return null;
+    const txt = el.textContent.trim();
+    return txt === '' ? null : txt;
+}
+function getTagNumber(parent, tagName) {
+    const raw = getTagValue(parent, tagName);
+    if (raw === null) return null;
+    const n = parseFloat(raw.replace(',', '.'));
+    return isNaN(n) ? null : n;
+}
+function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Tabela CST/CSOSN do ICMS (descrições oficiais resumidas)
+const ORIG_DESC = {
+    '0': 'Nacional, exceto códigos 3 a 5',
+    '1': 'Estrangeira — importação direta (exceto cód. 6)',
+    '2': 'Estrangeira — mercado interno (exceto cód. 7)',
+    '3': 'Nacional, conteúdo de importação > 40%',
+    '4': 'Nacional, produção conforme PPB',
+    '5': 'Nacional, conteúdo de importação ≤ 40%',
+    '6': 'Estrangeira — importação direta, sem similar (CAMEX)',
+    '7': 'Estrangeira — mercado interno, sem similar (CAMEX)'
+};
+const CST_DESC = {
+    '00': 'Tributada integralmente',
+    '10': 'Tributada e com cobrança do ICMS por ST',
+    '20': 'Com redução da BC',
+    '30': 'Isenta/não tributada e com cobrança do ICMS por ST',
+    '40': 'Isenta', '41': 'Não tributada',
+    '50': 'Com suspensão', '51': 'Com diferimento',
+    '60': 'ICMS cobrado anteriormente por ST',
+    '70': 'Com redução da BC e cobrança do ICMS por ST',
+    '90': 'Outras'
+};
+const CSOSN_DESC = {
+    '101': 'Tributada pelo SN com permissão de crédito',
+    '102': 'Tributada pelo SN sem permissão de crédito',
+    '103': 'Isenção do ICMS no SN p/ faixa de receita bruta',
+    '201': 'Tributada pelo SN com crédito e com ICMS por ST',
+    '202': 'Tributada pelo SN sem crédito e com ICMS por ST',
+    '203': 'Isenção no SN p/ faixa de receita e com ICMS por ST',
+    '300': 'Imune', '400': 'Não tributada pelo SN',
+    '500': 'ICMS cobrado anteriormente por ST ou antecipação',
+    '900': 'Outros'
+};
+function origDesc(o) { return (o !== null && o !== undefined && ORIG_DESC[String(o)]) || ''; }
+function cstCsosnDesc(label, val) {
+    if (val === null || val === undefined) return '';
+    const v = String(val);
+    if (label === 'CSOSN') return CSOSN_DESC[v] || '';
+    return CST_DESC[v] || '';
+}
+
+function getFiltered() {
+    const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+    const modF = document.getElementById('modFilter').value;
+    return parsedItems.filter(it => {
+        if (modF && it.mod !== modF) return false;
+        if (!q) return true;
+        const hay = (it.code + ' ' + it.description + ' ' + it.ncm + ' ' + it.cfop + ' ' + (it.icmsCST||'') + ' ' + cstCsosnDesc(it.icmsCSTLabel, it.icmsCST) + ' ' + origDesc(it.icmsOrig) + ' ' + (it.cstIBS||'') + ' ' + (it.cClassTrib||'') + ' ' + it.nNF + ' ' + it.fileName).toLowerCase();
+        return hay.includes(q);
+    });
+}
+
+function onFilterChange() { currentPage = 1; renderTable(); }
+function onPageSizeChange() { currentPage = 1; renderTable(); }
+function goPage(p) { currentPage = p; renderTable(); }
+
+function renderAll() { renderFiles(); renderTable(); }
+
+function renderFiles() {
+    const panel = document.getElementById('filesPanel');
+    const chips = document.getElementById('fileChips');
+    document.getElementById('fileCount').innerText = loadedFiles.length;
+    panel.style.display = loadedFiles.length ? 'block' : 'none';
+    chips.innerHTML = '';
+    loadedFiles.forEach(f => {
+        const el = document.createElement('span');
+        el.className = 'file-chip';
+        el.innerHTML = '<span class="mod-badge">' + esc(f.mod) + '</span><span><strong>NF ' + esc(f.nNF) + '</strong> · ' + esc(f.fileName) + ' · ' + esc(f.emitNome).substring(0, 32) + ' (' + f.itemCount + ' itens)</span>';
+        const btn = document.createElement('button');
+        btn.title = 'Remover nota';
+        btn.innerText = '✕';
+        btn.onclick = () => removeFile(f.fileId);
+        el.appendChild(btn);
+        chips.appendChild(el);
+    });
+    const eb = document.getElementById('errorBox');
+    if (loadErrors.length) {
+        eb.style.display = 'block';
+        eb.innerHTML = '<strong>⚠ ' + loadErrors.length + ' aviso(s):</strong><br>• ' + loadErrors.slice(-8).map(esc).join('<br>• ');
+    } else eb.style.display = 'none';
+}
+
+function removeFile(fileId) {
+    loadedFiles = loadedFiles.filter(f => f.fileId !== fileId);
+    parsedItems = parsedItems.filter(i => i.fileId !== fileId);
+    currentPage = 1;
+    renderAll();
+}
+function clearAll() {
+    parsedItems = []; loadedFiles = []; loadErrors = []; currentPage = 1;
+    document.getElementById('searchInput').value = '';
+    document.getElementById('modFilter').value = '';
+    renderAll();
+}
+
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    const filtered = getFiltered();
+    const pageSize = parseInt(document.getElementById('pageSize').value, 10) || 50;
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * pageSize;
+    const pageItems = filtered.slice(start, start + pageSize);
+
+    document.getElementById('itemCountTag').innerText = '(' + filtered.length + ' itens · ' + loadedFiles.length + ' nota(s) · pág. ' + currentPage + '/' + totalPages + ')';
+
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="15" class="empty-state">Nenhum item para exibir. Carregue XMLs (55/65) ou ajuste o filtro.</td></tr>';
+    } else {
+        const fmtNum = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmtMoney = (v) => (v === null || v === undefined) ? '<span class="empty-cell">—</span>' : ('R$ ' + fmtNum(v));
+        const fmtAliq = (v) => (v === null || v === undefined) ? '<span class="empty-cell">—</span>' : (v.toFixed(2) + '%');
+        const fmtTxt = (v) => (v === null || v === undefined || v === '') ? '<span class="empty-cell">—</span>' : esc(v);
+        pageItems.forEach((item) => {
+            const tr = document.createElement('tr');
+            const icmsBadge = item.icmsCST === null
+                ? '<span class="empty-cell">—</span>'
+                : '<span class="badge-icms" title="' + esc(cstCsosnDesc(item.icmsCSTLabel, item.icmsCST)) + '">' + esc(item.icmsCSTLabel || '') + ' ' + esc(item.icmsCST) + '</span>' +
+                  '<div class="cst-desc">' + esc(cstCsosnDesc(item.icmsCSTLabel, item.icmsCST)) + '</div>' +
+                  (item.icmsTipo ? '<div style="font-size:10px;color:#94a3b8;" title="' + esc(origDesc(item.icmsOrig)) + '">' + esc(item.icmsTipo) + (item.icmsOrig !== null ? ' · orig ' + esc(item.icmsOrig) + (origDesc(item.icmsOrig) ? ' — ' + esc(origDesc(item.icmsOrig)) : '') : '') + '</div>' : '');
+            tr.innerHTML =
+                '<td class="text-center"><input type="checkbox" ' + (item.selected ? 'checked' : '') + ' data-gid="' + item.gid + '" onchange="toggleItem(' + item.gid + ', this.checked)"></td>' +
+                '<td class="text-center" style="color:#64748b;font-weight:600;">' + esc(item.nItem) + '</td>' +
+                '<td><div class="nf-tag"><strong>NF ' + esc(item.nNF) + '</strong> · mod ' + esc(item.mod) + ' · ' + esc(item.fileName) + '</div>' +
+                '<div style="font-weight:700;">' + esc(item.code) + '</div>' +
+                '<div style="font-size:11px;color:#64748b;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(item.description) + '">' + esc(item.description) + '</div></td>' +
+                '<td class="text-center"><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px;">' + esc(item.ncm) + '</code><div style="font-size:11px;color:#64748b;">' + esc(item.cfop) + '</div></td>' +
+                '<td class="text-center">' + icmsBadge + '</td>' +
+                '<td class="text-right">' + (item.icmsVBC === null ? '<span class="empty-cell">—</span>' : 'R$ ' + fmtNum(item.icmsVBC)) + '</td>' +
+                '<td class="text-right"><div>' + fmtAliq(item.icmsPICMS) + '</div><div style="font-weight:700;">' + fmtMoney(item.icmsVICMS) + '</div>' +
+                (item.icmsVICMSST !== null ? '<div style="font-size:10px;color:#94a3b8;">ST R$ ' + fmtNum(item.icmsVICMSST) + '</div>' : '') + '</td>' +
+                '<td class="text-center"><span class="badge-cst">' + fmtTxt(item.cstIBS) + ' / ' + fmtTxt(item.cClassTrib) + '</span></td>' +
+                '<td class="text-right">R$ ' + fmtNum(item.vProd) + '</td>' +
+                '<td class="text-right">' + (item.vBC === null ? '<span class="empty-cell">—</span>' : '<span class="badge-bc">R$ ' + fmtNum(item.vBC) + '</span>') + '</td>' +
+                '<td class="text-center"><div><strong style="color:#b45309;">' + fmtAliq(item.pIBSUF) + '</strong> <span style="font-size:10px;color:#94a3b8;">UF</span></div>' +
+                '<div style="font-size:11px;color:#64748b;">' + fmtAliq(item.pIBSMun) + ' <span style="font-size:10px;color:#94a3b8;">Mun</span></div></td>' +
+                '<td class="text-right"><div>' + fmtMoney(item.vIBSUF) + '</div><div style="font-size:11px;color:#94a3b8;">' + fmtMoney(item.vIBSMun) + '</div></td>' +
+                '<td class="text-right" style="font-weight:800;color:#b45309;background-color:#fefce8;">' + fmtMoney(item.vIBSTotal) + '</td>' +
+                '<td class="text-center"><span style="color:#0369a1;font-weight:700;">' + fmtAliq(item.pCBS) + '</span></td>' +
+                '<td class="text-right" style="font-weight:700;color:#0369a1;background-color:#f0f9ff;">' + fmtMoney(item.vCBS) + '</td>';
+            tbody.appendChild(tr);
+        });
+    }
+    renderPagination(filtered.length, pageSize, totalPages, start, pageItems.length);
+    calculateTotals();
+}
+
+function renderPagination(total, pageSize, totalPages, start, shown) {
+    const pag = document.getElementById('pagination');
+    pag.style.display = total ? 'flex' : 'none';
+    document.getElementById('pageInfo').innerText = total ? ('Exibindo ' + (total ? start + 1 : 0) + '–' + (start + shown) + ' de ' + total + ' itens') : '';
+    const box = document.getElementById('pageButtons');
+    box.innerHTML = '';
+    const mk = (label, page, disabled, active) => {
+        const b = document.createElement('button');
+        b.className = 'page-btn' + (active ? ' active' : '');
+        b.innerText = label;
+        b.disabled = !!disabled;
+        b.onclick = () => goPage(page);
+        box.appendChild(b);
+    };
+    mk('«', 1, currentPage === 1);
+    mk('‹', Math.max(1, currentPage - 1), currentPage === 1);
+    let p0 = Math.max(1, currentPage - 3), p1 = Math.min(totalPages, currentPage + 3);
+    if (p0 > 1) { mk('1', 1); if (p0 > 2) { const s = document.createElement('span'); s.innerText = '…'; box.appendChild(s); } }
+    for (let p = p0; p <= p1; p++) mk(String(p), p, false, p === currentPage);
+    if (p1 < totalPages) { if (p1 < totalPages - 1) { const s = document.createElement('span'); s.innerText = '…'; box.appendChild(s); } mk(String(totalPages), totalPages); }
+    mk('›', Math.min(totalPages, currentPage + 1), currentPage === totalPages);
+    mk('»', totalPages, currentPage === totalPages);
+}
+
+function toggleItem(gid, isChecked) {
+    const it = parsedItems.find(x => x.gid === gid);
+    if (it) it.selected = isChecked;
+    calculateTotals();
+}
+function toggleSelectAll(checked) {
+    const filtered = getFiltered();
+    const target = filtered.length ? filtered : parsedItems;
+    target.forEach(item => item.selected = checked);
+    const sa = document.getElementById('selectAll');
+    if (sa) sa.checked = checked;
+    renderTable();
+}
+
+function calculateTotals() {
+    let totalProd = 0, totalBC = 0, totalCBS = 0, totalIBS = 0, totalICMS = 0;
+    parsedItems.forEach(item => {
+        if (item.selected) {
+            totalProd += item.vProd;
+            totalBC += item.vBC ?? 0;
+            totalCBS += item.vCBS ?? 0;
+            totalIBS += item.vIBSTotal ?? 0;
+            totalICMS += item.icmsVICMS ?? 0;
         }
+    });
+    const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('lblTotalProd').innerText = fmt(totalProd);
+    document.getElementById('lblTotalBC').innerText = fmt(totalBC);
+    document.getElementById('lblTotalIBS').innerText = fmt(totalIBS);
+    document.getElementById('lblTotalCBS').innerText = fmt(totalCBS);
+    document.getElementById('lblTotalICMS').innerText = fmt(totalICMS);
+    document.getElementById('lblFiles').innerText = loadedFiles.length + ' / ' + parsedItems.length;
+    document.getElementById('hdrIbsTotal').innerText = fmt(totalIBS);
+    document.getElementById('hdrCbsTotal').innerText = fmt(totalCBS);
+    document.getElementById('hdrIcmsTotal').innerText = fmt(totalICMS);
+}
 
-        function toggleSelectAll(checked) {
-            parsedItems.forEach(item => item.selected = checked);
-            document.getElementById('selectAll').checked = checked;
-            renderTable();
-        }
-
-        function calculateTotals() {
-            let totalProd = 0;
-            let totalBC = 0;
-            let totalCBS = 0;
-            let totalIBS = 0;
-
-            parsedItems.forEach(item => {
-                if (item.selected) {
-                    totalProd += item.vProd;
-                    totalBC += item.vBC ?? 0;
-                    totalCBS += item.vCBS ?? 0;
-                    totalIBS += item.vIBSTotal ?? 0;
-                }
-            });
-
-            const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-            document.getElementById('lblTotalProd').innerText = fmt(totalProd);
-            document.getElementById('lblTotalBC').innerText = fmt(totalBC);
-            document.getElementById('lblTotalIBS').innerText = fmt(totalIBS);
-            document.getElementById('lblTotalCBS').innerText = fmt(totalCBS);
-
-            document.getElementById('hdrIbsTotal').innerText = fmt(totalIBS);
-            document.getElementById('hdrCbsTotal').innerText = fmt(totalCBS);
-        }
-
-        function exportToCSV() {
-            if (parsedItems.length === 0) {
-                alert("Nenhum dado para exportar.");
-                return;
-            }
-
-            let csv = "Item;Codigo;Descricao;NCM;CST;cClassTrib;Valor_Produto;BC_IBSCBS;Aliq_IBS_UF;VLR_IBS_UF;Aliq_IBS_Mun;VLR_IBS_Mun;VLR_IBS_Total;Aliq_CBS;VLR_CBS\n";
-
-            parsedItems.filter(i => i.selected).forEach(item => {
-                const fmt = (n) => (n === null || n === undefined) ? '' : n.toString().replace('.',',');
-                const txt = (v) => (v === null || v === undefined) ? '' : `"${v}"`;
-                csv += `${item.id};"${item.code}";"${item.description}";"${item.ncm}";${txt(item.cst)};${txt(item.cClassTrib)};${fmt(item.vProd)};${fmt(item.vBC)};${fmt(item.pIBSUF)};${fmt(item.vIBSUF)};${fmt(item.pIBSMun)};${fmt(item.vIBSMun)};${fmt(item.vIBSTotal)};${fmt(item.pCBS)};${fmt(item.vCBS)}\n`;
-            });
-
-            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "Extracao_IBS_CBS_Clean.csv";
-            a.click();
-        }
-    </script>
+function exportToCSV() {
+    const sel = parsedItems.filter(i => i.selected);
+    if (!sel.length) { alert('Nenhum dado selecionado para exportar.'); return; }
+    let csv = 'Arquivo;Modelo;NF;Serie;Chave;Emitente;Item;Codigo;Descricao;NCM;CFOP;CST_ICMS_Tipo;Orig;Orig_Desc;CST_CSOSN;CST_CSOSN_Valor;CST_CSOSN_Desc;BC_ICMS;Aliq_ICMS;VLR_ICMS;VLR_ICMS_ST;CST_IBS;cClassTrib;Valor_Produto;BC_IBSCBS;Aliq_IBS_UF;VLR_IBS_UF;Aliq_IBS_Mun;VLR_IBS_Mun;VLR_IBS_Total;Aliq_CBS;VLR_CBS\n';
+    sel.forEach(item => {
+        const fmt = (n) => (n === null || n === undefined) ? '' : String(n).replace('.', ',');
+        const txt = (v) => (v === null || v === undefined) ? '' : ('"' + String(v).replace(/"/g, '""') + '"');
+        csv += [txt(item.fileName), txt(item.mod), txt(item.nNF), txt(item.serie), txt(item.chave), txt(item.emitNome),
+            txt(item.nItem), txt(item.code), txt(item.description), txt(item.ncm), txt(item.cfop),
+            txt(item.icmsTipo), txt(item.icmsOrig), txt(origDesc(item.icmsOrig)), txt(item.icmsCSTLabel), txt(item.icmsCST), txt(cstCsosnDesc(item.icmsCSTLabel, item.icmsCST)),
+            fmt(item.icmsVBC), fmt(item.icmsPICMS), fmt(item.icmsVICMS), fmt(item.icmsVICMSST),
+            txt(item.cstIBS), txt(item.cClassTrib), fmt(item.vProd), fmt(item.vBC),
+            fmt(item.pIBSUF), fmt(item.vIBSUF), fmt(item.pIBSMun), fmt(item.vIBSMun), fmt(item.vIBSTotal), fmt(item.pCBS), fmt(item.vCBS)
+        ].join(';') + '\n';
+    });
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Extracao_IBS_CBS_ICMS_Lote.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+</script>
 </body>
 </html>
