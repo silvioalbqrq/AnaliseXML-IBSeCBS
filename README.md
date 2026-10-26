@@ -19,7 +19,7 @@ Leitor local de XML de NF-e (modelo 55) e NFC-e (modelo 65) para conferir, item 
 - Exibe `— / não informado` quando a tag não existe no XML. Ausência de tag nunca é convertida em R$ 0,00.
 - Confere os totais do XML (`<ICMSTot>` e `<IBSCBSTot>`) contra a soma dos itens e também a aritmética de cada item (base × alíquota), com tolerância de R$ 0,02 para arredondamento.
 - Exporta CSV (UTF-8 com BOM, separador `;`) dos itens visíveis e marcados, com neutralização de fórmulas (=, +, -, @).
-- Imprime ou salva em PDF com layout próprio.
+- Imprime ou salva em PDF em A4 paisagem, com todas as colunas visíveis.
 
 ## O que a ferramenta **não** faz
 

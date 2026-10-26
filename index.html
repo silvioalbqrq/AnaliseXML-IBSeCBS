@@ -80,15 +80,17 @@
         .btn-danger { background-color: #7f1d1d; }
         input[type="checkbox"] { accent-color: var(--navy); }
         .table-container { background-color: var(--card-light); border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-top: none; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; min-width: 1350px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; min-width: 1200px; table-layout: fixed; }
         thead tr.group-header th { background-color: var(--navy2); color: #cdd9e8; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 10px; border-bottom: 1px solid var(--navy); }
         thead tr.group-header th.gh-item { color: #f8fafc; }
         thead tr.group-header th.gh-icms { color: #fda4af; }
         thead tr.group-header th.gh-bc { color: var(--gold); }
         thead tr.group-header th.gh-ibs { color: #fde047; }
         thead tr.group-header th.gh-cbs { color: #7dd3fc; }
-        thead tr.col-header th { background-color: var(--navy); color: #e2e8f0; font-weight: 600; font-size: 11px; padding: 9px 10px; white-space: nowrap; border-bottom: 2px solid var(--gold); }
-        tbody td { padding: 10px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        thead tr.col-header th { background-color: var(--navy); color: #e2e8f0; font-weight: 600; font-size: 11px; padding: 9px 10px; white-space: normal; border-bottom: 2px solid var(--gold); }
+        tbody td { padding: 8px; border-bottom: 1px solid var(--border-color); vertical-align: middle; overflow-wrap: anywhere; }
+        .text-right, .nowrap { white-space: nowrap; }
+        .mini { font-size: 10px; color: #5d6e80; font-weight: 400; text-transform: uppercase; }
         tbody tr:nth-child(even) { background-color: #f8fafc; }
         tbody tr:hover { background-color: #f1f5f9; }
         .text-right { text-align: right; } .text-center { text-align: center; }
@@ -128,6 +130,8 @@
         .legend td { border-bottom: 1px solid #f1f5f9; padding: 3px 4px; vertical-align: top; }
         .legend td.code { font-family: monospace; font-weight: 700; white-space: nowrap; width: 44px; }
         .cst-desc { font-size: 10px; color: #475569; max-width: 180px; line-height: 1.25; margin-top: 2px; }
+        .item-desc { font-size: 11px; color: #5d6e80; overflow-wrap: anywhere; }
+        .ncm-code { background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-size: 10px; white-space: nowrap; }
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
         .status-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; white-space: nowrap; border: 1px solid transparent; }
@@ -146,13 +150,37 @@
         #selftestPanel.ok { display: block; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
         #selftestPanel.bad { display: block; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
         #selftestPanel ul { margin: 6px 0 0 18px; }
+        @media screen and (max-width: 1249px) {
+            .table-container { overflow: visible; border: 0; background: transparent; box-shadow: none; }
+            table { min-width: 0; display: block; }
+            thead { display: none; }
+            tbody, tr, td { display: block; }
+            tbody tr { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px 16px; background: #fff !important; border: 1px solid var(--border-color); border-top: 3px solid var(--gold); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; }
+            tbody td { border: 0; padding: 0; text-align: left !important; }
+            tbody td::before { content: attr(data-label); display: block; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px; }
+            tbody td.cell-main, tbody td.empty-state { grid-column: 1 / -1; }
+            tbody td.cell-main::before, tbody td.empty-state::before { content: none; }
+            tbody td.cell-num { display: flex; align-items: center; gap: 6px; }
+            tbody td.cell-num::before { display: inline; margin: 0; }
+            .badge-bc, .badge-cst, .badge-icms { white-space: normal; }
+        }
         @media print {
+            @page { size: A4 landscape; margin: 8mm; }
             .upload-section, .action-buttons, .toolbar .filters, .pagination, .files-panel button, .footer,
             .btn-action, #selftestPanel { display: none !important; }
             body { background: #fff; }
             .container { max-width: none; margin: 0; padding: 0; }
             .table-container, .card, .legend, .files-panel { box-shadow: none; }
-            table { min-width: 0; font-size: 9px; }
+            .table-container { overflow: visible; border: 0; }
+            table { min-width: 0; width: 100%; font-size: 8px; }
+            thead tr.group-header th { font-size: 7px; padding: 4px 3px; }
+            thead tr.col-header th { font-size: 7.5px; padding: 4px 3px; }
+            tbody td { padding: 4px 3px; }
+            .badge-cst, .badge-icms { font-size: 7px; padding: 1px 3px; }
+            .badge-bc { font-size: 8px; padding: 1px 4px; }
+            .cst-desc, .item-desc, .nf-tag { font-size: 7px; max-width: none; }
+            .ncm-code { font-size: 7px; padding: 1px 3px; }
+            .status-badge, .flag-note { font-size: 6.5px; }
             thead { display: table-header-group; }
             tr { break-inside: avoid; }
             * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -309,17 +337,22 @@
         <div class="table-container">
             <table id="itemsTable">
                 <caption class="sr-only">Itens das notas fiscais com CST/CSOSN do ICMS, ICMS próprio, ICMS ST, base e valores de IBS e CBS</caption>
+                <colgroup>
+                    <col style="width:5%"><col style="width:13%"><col style="width:6.5%"><col style="width:9%">
+                    <col style="width:7.5%"><col style="width:8%"><col style="width:8%"><col style="width:7.5%">
+                    <col style="width:7.5%"><col style="width:7.5%"><col style="width:6.5%"><col style="width:7.5%">
+                    <col style="width:6.5%">
+                </colgroup>
                 <thead>
                     <tr class="group-header">
-                        <th colspan="4" scope="colgroup" class="gh-item">1. Identificação / Nota</th>
+                        <th colspan="3" scope="colgroup" class="gh-item">1. Identificação / Nota</th>
                         <th colspan="4" scope="colgroup" class="gh-icms">2. ICMS (CST / CSOSN)</th>
                         <th colspan="2" scope="colgroup" class="gh-bc text-right">3. Valoração & BC</th>
-                        <th colspan="4" scope="colgroup" class="gh-ibs text-center">4. IBS (CST / UF / Mun)</th>
-                        <th colspan="2" scope="colgroup" class="gh-cbs text-center">5. CBS (Federal)</th>
+                        <th colspan="3" scope="colgroup" class="gh-ibs text-center">4. IBS (CST / UF / Mun)</th>
+                        <th colspan="1" scope="colgroup" class="gh-cbs text-center">5. CBS (Federal)</th>
                     </tr>
                     <tr class="col-header">
-                        <th scope="col" class="text-center"><input type="checkbox" id="selectAll" checked aria-label="Marcar ou desmarcar todos os itens filtrados" onchange="toggleSelectAll(this.checked)"></th>
-                        <th scope="col" class="text-center">#</th>
+                        <th scope="col" class="text-center"><input type="checkbox" id="selectAll" checked aria-label="Marcar ou desmarcar todos os itens filtrados" onchange="toggleSelectAll(this.checked)"> Item</th>
                         <th scope="col">NF / Código / Descrição</th>
                         <th scope="col" class="text-center">NCM / CFOP</th>
                         <th scope="col" class="text-center">CST ICMS</th>
@@ -330,14 +363,12 @@
                         <th scope="col" class="text-right">BC IBS/CBS</th>
                         <th scope="col" class="text-center">CST / ClassTrib IBS</th>
                         <th scope="col" class="text-center">Alíq. UF / Mun</th>
-                        <th scope="col" class="text-right">Vlr. UF / Mun</th>
-                        <th scope="col" class="text-right" style="color:#fde047;">Vlr. IBS Total</th>
-                        <th scope="col" class="text-center">Alíq. CBS</th>
-                        <th scope="col" class="text-right" style="color:#38bdf8;">Vlr. CBS</th>
+                        <th scope="col" class="text-right">Vlr. IBS (UF / Mun / Total)</th>
+                        <th scope="col" class="text-center">CBS (Alíq. / Vlr.)</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="16" class="empty-state">Nenhum arquivo XML carregado ainda. Selecione XMLs, uma pasta ou um .zip acima (modelos 55 e 65).</td></tr>
+                    <tr><td colspan="13" class="empty-state">Nenhum arquivo XML carregado ainda. Selecione XMLs, uma pasta ou um .zip acima (modelos 55 e 65).</td></tr>
                 </tbody>
             </table>
         </div>
@@ -836,7 +867,7 @@ function renderTable() {
         new Set(filtered.map(i => i.fileId)).size + ' nota(s) · pág. ' + currentPage + '/' + totalPages + ')';
 
     if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="16" class="empty-state">Nenhum item para exibir. Carregue XMLs (55/65) ou ajuste o filtro.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" class="empty-state">Nenhum item para exibir. Carregue XMLs (55/65) ou ajuste o filtro.</td></tr>';
     } else {
         pageItems.forEach((item) => {
             const tr = document.createElement('tr');
@@ -851,25 +882,27 @@ function renderTable() {
                 : '';
             const nfLabel = 'NF ' + esc(item.nNF) + ' · mod ' + esc(item.mod) + (item.partTotal > 1 ? ' · nota ' + item.part + '/' + item.partTotal : '');
             tr.innerHTML =
-                '<td class="text-center"><input type="checkbox" ' + (item.selected ? 'checked' : '') + ' data-gid="' + item.gid + '" aria-label="Selecionar item ' + esc(item.nItem) + ' da NF ' + esc(item.nNF) + '" onchange="toggleItem(' + item.gid + ', this.checked)"></td>' +
-                '<td class="text-center" style="color:#5d6e80;font-weight:600;">' + esc(item.nItem) + '</td>' +
-                '<td><div class="nf-tag" title="Arquivo: ' + esc(item.fileName) + '"><strong>' + nfLabel + '</strong> ' + statusBadge(item.status) + '</div>' +
+                '<td class="text-center cell-num" data-label="Item"><input type="checkbox" ' + (item.selected ? 'checked' : '') + ' data-gid="' + item.gid + '" aria-label="Selecionar item ' + esc(item.nItem) + ' da NF ' + esc(item.nNF) + '" onchange="toggleItem(' + item.gid + ', this.checked)"> <strong style="color:#5d6e80;">' + esc(item.nItem) + '</strong></td>' +
+                '<td class="cell-main"><div class="nf-tag" title="Arquivo: ' + esc(item.fileName) + '"><strong>' + nfLabel + '</strong> ' + statusBadge(item.status) + '</div>' +
                 '<div style="font-weight:700;">' + esc(item.code) + '</div>' +
-                '<div style="font-size:11px;color:#5d6e80;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(item.description) + '">' + esc(item.description) + '</div></td>' +
-                '<td class="text-center"><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px;">' + fmtTxt(item.ncm) + '</code><div style="font-size:11px;color:#5d6e80;">' + fmtTxt(item.cfop) + '</div></td>' +
-                '<td class="text-center">' + icmsBadge + '</td>' +
-                '<td class="text-right">' + fmtMoney(item.icmsVBC) + '</td>' +
-                '<td class="text-right"><div>' + fmtAliq(item.icmsPICMS) + '</div><div style="font-weight:700;">' + fmtMoney(item.icmsVICMS) + '</div></td>' +
-                '<td class="text-right">' + stHtml(item) + '</td>' +
-                '<td class="text-right">' + fmtMoney(item.vProd) + '</td>' +
-                '<td class="text-right">' + (item.vBC === null ? '<span class="empty-cell">—</span>' : '<span class="badge-bc">R$ ' + fmtNum(item.vBC) + '</span>') + '</td>' +
-                '<td class="text-center"><span class="badge-cst">' + fmtTxt(item.cstIBS) + ' / ' + fmtTxt(item.cClassTrib) + '</span>' + special + '</td>' +
-                '<td class="text-center"><div><strong style="color:#b45309;">' + fmtAliq(item.pIBSUF) + '</strong> <span style="font-size:10px;color:#5d6e80;">UF</span></div>' +
+                '<div class="item-desc" title="' + esc(item.description) + '">' + esc(item.description) + '</div></td>' +
+                '<td class="text-center" data-label="NCM / CFOP"><code class="ncm-code">' + fmtTxt(item.ncm) + '</code><div style="font-size:11px;color:#5d6e80;">' + fmtTxt(item.cfop) + '</div></td>' +
+                '<td class="text-center" data-label="CST ICMS">' + icmsBadge + '</td>' +
+                '<td class="text-right" data-label="BC ICMS">' + fmtMoney(item.icmsVBC) + '</td>' +
+                '<td class="text-right" data-label="pICMS / vICMS"><div>' + fmtAliq(item.icmsPICMS) + '</div><div style="font-weight:700;">' + fmtMoney(item.icmsVICMS) + '</div></td>' +
+                '<td class="text-right" data-label="ICMS ST">' + stHtml(item) + '</td>' +
+                '<td class="text-right" data-label="Vlr. Produto">' + fmtMoney(item.vProd) + '</td>' +
+                '<td class="text-right" data-label="BC IBS/CBS">' + (item.vBC === null ? '<span class="empty-cell">—</span>' : '<span class="badge-bc">R$ ' + fmtNum(item.vBC) + '</span>') + '</td>' +
+                '<td class="text-center" data-label="CST / ClassTrib IBS"><span class="badge-cst">' + fmtTxt(item.cstIBS) + ' / ' + fmtTxt(item.cClassTrib) + '</span>' + special + '</td>' +
+                '<td class="text-center nowrap" data-label="Alíq. UF / Mun"><div><strong style="color:#b45309;">' + fmtAliq(item.pIBSUF) + '</strong> <span style="font-size:10px;color:#5d6e80;">UF</span></div>' +
                 '<div style="font-size:11px;color:#5d6e80;">' + fmtAliq(item.pIBSMun) + ' <span style="font-size:10px;color:#5d6e80;">Mun</span></div></td>' +
-                '<td class="text-right"><div>' + fmtMoney(item.vIBSUF) + '</div><div style="font-size:11px;color:#5d6e80;">' + fmtMoney(item.vIBSMun) + '</div></td>' +
-                '<td class="text-right" style="font-weight:800;color:#b45309;background-color:#fefce8;">' + fmtMoney(item.vIBSTotal) + '</td>' +
-                '<td class="text-center"><span style="color:#0369a1;font-weight:700;">' + fmtAliq(item.pCBS) + '</span></td>' +
-                '<td class="text-right" style="font-weight:700;color:#0369a1;background-color:#f0f9ff;">' + fmtMoney(item.vCBS) + '</td>';
+                '<td class="text-right" data-label="Vlr. IBS (UF / Mun / Total)" style="background-color:#fefce8;">' +
+                '<div><span class="mini">UF</span> ' + fmtMoney(item.vIBSUF) + '</div>' +
+                '<div style="font-size:11px;color:#5d6e80;"><span class="mini">Mun</span> ' + fmtMoney(item.vIBSMun) + '</div>' +
+                '<div style="font-weight:800;color:#b45309;"><span class="mini">Total</span> ' + fmtMoney(item.vIBSTotal) + '</div></td>' +
+                '<td class="text-center nowrap" data-label="CBS (Alíq. / Vlr.)" style="background-color:#f0f9ff;">' +
+                '<div style="color:#0369a1;font-weight:700;">' + fmtAliq(item.pCBS) + '</div>' +
+                '<div style="font-weight:700;color:#0369a1;">' + fmtMoney(item.vCBS) + '</div></td>';
             tbody.appendChild(tr);
         });
     }
