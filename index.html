@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise do XML do IBS/CBS — Lote 55/65</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <meta name="description" content="Leitor local de XML da NF-e e NFC-e (modelos 55 e 65) com apuração de IBS, CBS e ICMS por item, conferência dos totais do XML e exportação CSV.">
+    <meta name="theme-color" content="#0f2a44">
+    <title>AnalisaXML Tributário: IBS, CBS e ICMS — Lote 55/65</title>
+    <script src="vendor/jszip.min.js"></script>
     <style>
         :root {
             --navy: #0f2a44;
@@ -58,7 +60,7 @@
         .file-chips { display: flex; flex-wrap: wrap; gap: 8px; }
         .file-chip { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 20px; padding: 4px 8px 4px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
         .file-chip .mod-badge { background: #0f172a; color: #fff; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700; }
-        .file-chip button { border: none; background: #ef4444; color: #fff; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 11px; line-height: 1; }
+        .file-chip button { border: none; background: #ef4444; color: #fff; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 13px; line-height: 1; }
         .error-box { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 8px; padding: 10px 14px; font-size: 12px; margin-bottom: 16px; display: none; }
         .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
         .card { background-color: var(--card-light); border-radius: var(--radius); padding: 14px 18px; box-shadow: var(--shadow); border: 1px solid var(--border-color); border-top: 3px solid var(--gold); }
@@ -107,7 +109,7 @@
         .footer a{color:#fff}
         .footer-grid{display:grid;grid-template-columns:2fr 1fr 1.4fr;gap:20px;padding-top:26px;padding-bottom:10px}
         .footer .donate-code{font-family:Consolas,monospace;font-size:12px;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:6px;word-break:break-all}
-        .footer .reveal-link{color:#c9a227;font-size:12px}
+        .footer .reveal-link{color:#c9a227;font-size:12px;display:inline-block;min-height:24px;padding:5px 0}
         .contact-icons{display:flex;gap:10px;margin-top:10px}
         .contact-icons a{width:40px;height:40px;display:grid;place-items:center;border:1px solid #c9a227;border-radius:50%;color:#c9a227}
         .contact-icons a:hover{background:#c9a227;color:#0f2a44}
@@ -126,7 +128,35 @@
         .legend td { border-bottom: 1px solid #f1f5f9; padding: 3px 4px; vertical-align: top; }
         .legend td.code { font-family: monospace; font-weight: 700; white-space: nowrap; width: 44px; }
         .cst-desc { font-size: 10px; color: #475569; max-width: 180px; line-height: 1.25; margin-top: 2px; }
-        @media print { .upload-section, .action-buttons, .toolbar .filters, .pagination, .files-panel button, .footer { display: none !important; } }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+        .status-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; white-space: nowrap; border: 1px solid transparent; }
+        .status-badge.ok { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+        .status-badge.bad { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+        .status-badge.warn { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+        .flag-note { display: inline-block; margin-top: 2px; font-size: 10px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 5px; }
+        .audit-list { margin-top: 10px; display: grid; gap: 8px; }
+        .audit-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; background: #fff; }
+        .audit-card h4 { font-size: 12px; margin-bottom: 4px; }
+        .audit-line { font-size: 11px; padding: 1px 0; color: #334155; }
+        .audit-line.ok { color: #166534; } .audit-line.bad { color: #991b1b; } .audit-line.warn { color: #92400e; } .audit-line.na { color: #64748b; }
+        .audit-summary { font-size: 12px; margin-top: 6px; color: #334155; }
+        .error-box button { float: right; border: 0; background: transparent; color: #991b1b; font-size: 16px; line-height: 1; cursor: pointer; }
+        #selftestPanel { border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; display: none; }
+        #selftestPanel.ok { display: block; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        #selftestPanel.bad { display: block; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        #selftestPanel ul { margin: 6px 0 0 18px; }
+        @media print {
+            .upload-section, .action-buttons, .toolbar .filters, .pagination, .files-panel button, .footer,
+            .btn-action, #selftestPanel { display: none !important; }
+            body { background: #fff; }
+            .container { max-width: none; margin: 0; padding: 0; }
+            .table-container, .card, .legend, .files-panel { box-shadow: none; }
+            table { min-width: 0; font-size: 9px; }
+            thead { display: table-header-group; }
+            tr { break-inside: avoid; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
     </style>
 </head>
 <body>
@@ -137,39 +167,42 @@
                 <a class="btn-github" href="https://github.com/silvioalbqrq" target="_blank" rel="noopener noreferrer">GitHub</a>
             </div>
             <div class="header-stats">
-                <div class="stat-card"><div class="stat-label">IBS Total (UF + Mun)</div><div class="stat-value" id="hdrIbsTotal">R$ 0,00</div></div>
-                <div class="stat-card"><div class="stat-label">CBS Total (Federal)</div><div class="stat-value" id="hdrCbsTotal" style="color:#38bdf8;">R$ 0,00</div></div>
-                <div class="stat-card"><div class="stat-label">ICMS Total</div><div class="stat-value" id="hdrIcmsTotal" style="color:#fda4af;">R$ 0,00</div></div>
+                <div class="stat-card"><div class="stat-label">IBS Total (UF + Mun)</div><div class="stat-value" id="hdrIbsTotal">—</div></div>
+                <div class="stat-card"><div class="stat-label">CBS Total (Federal)</div><div class="stat-value" id="hdrCbsTotal" style="color:#38bdf8;">—</div></div>
+                <div class="stat-card"><div class="stat-label">ICMS Próprio</div><div class="stat-value" id="hdrIcmsTotal" style="color:#fda4af;">—</div></div>
+                <div class="stat-card"><div class="stat-label">ICMS ST (retido/recolhido)</div><div class="stat-value" id="hdrIcmsStTotal" style="color:#fda4af;">—</div></div>
             </div>
         </div>
         <h1 class="title">AnalisaXML Tributário: IBS, CBS e ICMS</h1>
         <p class="subtitle">Múltiplos XMLs (arquivos, pasta ou .zip) dos modelos 55 (NF-e) e 65 (NFC-e). Somente valores do XML — em branco quando a tag não existir.</p>
     </header>
 
-    <div class="container">
+    <main class="container" id="conteudo">
+        <div id="selftestPanel" role="status" aria-live="polite"></div>
+
         <div class="upload-section" id="dropZone">
-            <div class="upload-icon">📁</div>
+            <div class="upload-icon" aria-hidden="true">📁</div>
             <h2 style="font-size:18px;font-weight:700;">Arraste e solte XMLs / pasta / .zip aqui</h2>
             <p style="margin-top:4px;color:#5d6e80;font-size:13px;">Aceita vários arquivos .xml, seleção de pasta ou arquivo .zip com XMLs. Modelos 55 e 65.</p>
             <div class="upload-row">
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click();event.stopPropagation();">Selecionar XMLs</button>
-                <button class="upload-btn secondary" onclick="document.getElementById('folderInput').click();event.stopPropagation();">Selecionar Pasta</button>
-                <button class="upload-btn secondary" onclick="document.getElementById('zipInput').click();event.stopPropagation();">Selecionar .ZIP</button>
+                <button type="button" class="upload-btn" id="btnFiles">Selecionar XMLs</button>
+                <button type="button" class="upload-btn secondary" id="btnFolder">Selecionar Pasta</button>
+                <button type="button" class="upload-btn secondary" id="btnZip">Selecionar .ZIP</button>
             </div>
-            <input type="file" id="fileInput" class="hidden-input" accept=".xml" multiple>
-            <input type="file" id="folderInput" class="hidden-input" webkitdirectory directory multiple>
-            <input type="file" id="zipInput" class="hidden-input" accept=".zip">
+            <input type="file" id="fileInput" class="hidden-input" accept=".xml,text/xml" multiple aria-label="Selecionar arquivos XML">
+            <input type="file" id="folderInput" class="hidden-input" webkitdirectory directory multiple aria-label="Selecionar pasta com XMLs">
+            <input type="file" id="zipInput" class="hidden-input" accept=".zip" aria-label="Selecionar arquivo ZIP com XMLs">
         </div>
 
-        <div class="error-box" id="errorBox"></div>
+        <div class="error-box" id="errorBox" role="alert" aria-live="polite"></div>
 
         <div class="files-panel" id="filesPanel" style="display:none;">
-            <h4>📄 Notas carregadas (<span id="fileCount">0</span>) <span style="color:#5d6e80;font-weight:normal;">— clique no ✕ para remover a nota e seus itens</span></h4>
+            <h3 style="font-size:13px;margin-bottom:8px;">📄 Notas carregadas (<span id="fileCount">0</span>) <span style="color:#5d6e80;font-weight:normal;">— clique no ✕ para remover a nota e seus itens</span></h3>
             <div class="file-chips" id="fileChips"></div>
         </div>
 
         <details class="legend">
-            <summary>📖 Legenda CST / CSOSN do ICMS (origem + situação tributária)</summary>
+            <summary>📖 Legenda CST / CSOSN do ICMS e CST do IBS/CBS</summary>
             <div class="legend-grid">
                 <div><h5>Origem</h5><table>
                     <tr><td class="code">0</td><td>Nacional, exceto as indicadas nos códigos 3 a 5</td></tr>
@@ -181,7 +214,7 @@
                     <tr><td class="code">6</td><td>Estrangeira — importação direta, sem similar nacional (lista CAMEX)</td></tr>
                     <tr><td class="code">7</td><td>Estrangeira — adquirida no mercado interno, sem similar nacional (lista CAMEX)</td></tr>
                 </table></div>
-                <div><h5>CST — regime normal (origem + 2 dígitos)</h5><table>
+                <div><h5>CST — regime normal (3 dígitos: origem + 2)</h5><table>
                     <tr><td class="code">00</td><td>Tributada integralmente</td></tr>
                     <tr><td class="code">10</td><td>Tributada e com cobrança do ICMS por ST</td></tr>
                     <tr><td class="code">20</td><td>Com redução da BC</td></tr>
@@ -194,7 +227,7 @@
                     <tr><td class="code">70</td><td>Com redução da BC e cobrança do ICMS por ST</td></tr>
                     <tr><td class="code">90</td><td>Outras</td></tr>
                 </table></div>
-                <div><h5>CSOSN — Simples Nacional (origem + 3 dígitos)</h5><table>
+                <div><h5>CSOSN — Simples Nacional (3 dígitos)</h5><table>
                     <tr><td class="code">101</td><td>Tributada pelo SN com permissão de crédito</td></tr>
                     <tr><td class="code">102</td><td>Tributada pelo SN sem permissão de crédito</td></tr>
                     <tr><td class="code">103</td><td>Isenção do ICMS no SN para faixa de receita bruta</td></tr>
@@ -206,28 +239,58 @@
                     <tr><td class="code">500</td><td>ICMS cobrado anteriormente por ST (substituído) ou por antecipação</td></tr>
                     <tr><td class="code">900</td><td>Outros</td></tr>
                 </table></div>
+                <div><h5>CST — IBS/CBS (3 dígitos, LC 214/2025)</h5><table>
+                    <tr><td class="code">000</td><td>Tributação integral</td></tr>
+                    <tr><td class="code">010</td><td>Tributação com alíquotas uniformes</td></tr>
+                    <tr><td class="code">011</td><td>Tributação com alíquotas uniformes reduzidas</td></tr>
+                    <tr><td class="code">200</td><td>Alíquota reduzida</td></tr>
+                    <tr><td class="code">220</td><td>Alíquota fixa</td></tr>
+                    <tr><td class="code">221</td><td>Alíquota fixa proporcional</td></tr>
+                    <tr><td class="code">222</td><td>Redução de base de cálculo</td></tr>
+                    <tr><td class="code">400</td><td>Isenção</td></tr>
+                    <tr><td class="code">410</td><td>Imunidade e não incidência</td></tr>
+                    <tr><td class="code">510</td><td>Diferimento</td></tr>
+                    <tr><td class="code">515</td><td>Diferimento com redução de alíquota</td></tr>
+                    <tr><td class="code">550</td><td>Suspensão</td></tr>
+                    <tr><td class="code">620</td><td>Tributação monofásica</td></tr>
+                    <tr><td class="code">800</td><td>Transferência de crédito</td></tr>
+                    <tr><td class="code">810</td><td>Ajuste de IBS na ZFM</td></tr>
+                    <tr><td class="code">811</td><td>Ajustes</td></tr>
+                    <tr><td class="code">820</td><td>Tributação em documento específico</td></tr>
+                    <tr><td class="code">830</td><td>Exclusão da base de cálculo</td></tr>
+                </table><p style="font-size:11px;color:#475569;margin-top:6px;">O CST do IBS/CBS sempre acompanha um <strong>cClassTrib</strong> de 6 dígitos (os 3 primeiros repetem o CST). A lista completa de cClassTrib está na NT 2025.002.</p></div>
             </div>
         </details>
 
         <div class="summary-grid">
-            <div class="card"><div class="card-title">Notas / Itens</div><div class="card-value" id="lblFiles">0 / 0</div><div class="card-desc">Arquivos mod. 55/65 e itens lidos</div></div>
-            <div class="card"><div class="card-title">Total dos Produtos (vProd)</div><div class="card-value" id="lblTotalProd">R$ 0,00</div><div class="card-desc">Soma do valor nominal dos itens</div></div>
-            <div class="card highlight"><div class="card-title" style="color:#15803d;">Base de Cálculo IBS/CBS (&lt;vBC&gt;)</div><div class="card-value" id="lblTotalBC" style="color:#166534;">R$ 0,00</div><div class="card-desc">Somente valor do XML — em branco se ausente</div></div>
-            <div class="card"><div class="card-title">Total ICMS (vICMS)</div><div class="card-value" id="lblTotalICMS" style="color:#9f1239;">R$ 0,00</div><div class="card-desc">Soma do ICMS próprio dos itens</div></div>
-            <div class="card"><div class="card-title">Total IBS (Estadual + Municipal)</div><div class="card-value" id="lblTotalIBS" style="color:#b45309;">R$ 0,00</div><div class="card-desc">Soma de IBS UF + IBS Mun</div></div>
-            <div class="card"><div class="card-title">Total CBS (Federal)</div><div class="card-value" id="lblTotalCBS" style="color:#0369a1;">R$ 0,00</div><div class="card-desc">Contribuição sobre Bens e Serviços</div></div>
+            <div class="card"><div class="card-title">Notas / Itens no filtro</div><div class="card-value" id="lblFiles">0 / 0</div><div class="card-desc" id="lblFilesDesc">Notas e itens exibidos</div></div>
+            <div class="card"><div class="card-title">Total dos Produtos (vProd)</div><div class="card-value" id="lblTotalProd">—</div><div class="card-desc" id="lblTotalProdDesc">Soma do valor nominal dos itens</div></div>
+            <div class="card highlight"><div class="card-title" style="color:#15803d;">Base de Cálculo IBS/CBS (&lt;vBC&gt;)</div><div class="card-value" id="lblTotalBC" style="color:#166534;">—</div><div class="card-desc" id="lblTotalBCDesc">Somente valor do XML</div></div>
+            <div class="card"><div class="card-title">ICMS Próprio (vICMS)</div><div class="card-value" id="lblTotalICMS" style="color:#9f1239;">—</div><div class="card-desc" id="lblTotalICMSDesc">ICMS próprio dos itens</div></div>
+            <div class="card"><div class="card-title">ICMS ST (retido/recolhido)</div><div class="card-value" id="lblTotalICMSST" style="color:#9f1239;">—</div><div class="card-desc" id="lblTotalICMSSTDesc">Soma de vICMSST e vICMSSTRet</div></div>
+            <div class="card"><div class="card-title">Total IBS (Estadual + Municipal)</div><div class="card-value" id="lblTotalIBS" style="color:#b45309;">—</div><div class="card-desc" id="lblTotalIBSDesc">Soma de IBS UF + IBS Mun</div></div>
+            <div class="card"><div class="card-title">Total CBS (Federal)</div><div class="card-value" id="lblTotalCBS" style="color:#0369a1;">—</div><div class="card-desc" id="lblTotalCBSDesc">Contribuição sobre Bens e Serviços</div></div>
         </div>
+        <p style="font-size:11px;color:#5d6e80;margin:-6px 0 16px;">
+            Totais = itens visíveis no filtro e marcados. Notas canceladas/denegadas aparecem na tabela, mas não entram nos totais.
+            <strong>— / não informado</strong> significa tag ausente no XML (nunca R$ 0,00 por ausência).
+        </p>
+
+        <details class="legend" id="auditPanel">
+            <summary>🔎 Conferência dos totais do XML × soma dos itens <span id="auditSummary" style="font-weight:400;color:#475569;">(sem notas)</span></summary>
+            <div class="audit-list" id="auditBody"></div>
+        </details>
 
         <div class="toolbar">
             <h3>🛒 Itens <span id="itemCountTag" style="font-size:12px;color:#cdd9e8;font-weight:normal;">(0 itens)</span></h3>
             <div class="filters">
-                <input type="text" id="searchInput" placeholder="Buscar código, descrição, NCM, CST..." style="min-width:220px;" oninput="onFilterChange()">
-                <select id="modFilter" onchange="onFilterChange()">
+                <input type="text" id="searchInput" placeholder="Buscar código, descrição, NCM, CST..." style="min-width:220px;" aria-label="Buscar nos itens" oninput="onFilterChange()">
+                <select id="modFilter" aria-label="Filtrar por modelo" onchange="onFilterChange()">
                     <option value="">Modelo: todos</option>
                     <option value="55">Modelo 55 (NF-e)</option>
                     <option value="65">Modelo 65 (NFC-e)</option>
                 </select>
-                <select id="pageSize" onchange="onPageSizeChange()">
+                <select id="pageSize" aria-label="Itens por página" onchange="onPageSizeChange()">
                     <option value="20">20/pág.</option>
                     <option value="50" selected>50/pág.</option>
                     <option value="100">100/pág.</option>
@@ -235,44 +298,46 @@
                 </select>
             </div>
             <div class="action-buttons">
-                <button class="btn-action" onclick="toggleSelectAll(true)">Marcar Todos</button>
-                <button class="btn-action" onclick="toggleSelectAll(false)">Desmarcar Todos</button>
-                <button class="btn-action btn-export" onclick="exportToCSV()">📥 Exportar CSV</button>
-                <button class="btn-action" onclick="window.print()">🖨️ Imprimir</button>
-                <button class="btn-action btn-danger" onclick="clearAll()">🗑 Limpar</button>
+                <button type="button" class="btn-action" onclick="toggleSelectAll(true)">Marcar filtrados</button>
+                <button type="button" class="btn-action" onclick="toggleSelectAll(false)">Desmarcar filtrados</button>
+                <button type="button" class="btn-action btn-export" onclick="exportToCSV()">📥 Exportar CSV</button>
+                <button type="button" class="btn-action" onclick="window.print()">🖨️ Imprimir</button>
+                <button type="button" class="btn-action btn-danger" onclick="clearAll()">🗑 Limpar</button>
             </div>
         </div>
 
         <div class="table-container">
             <table id="itemsTable">
+                <caption class="sr-only">Itens das notas fiscais com CST/CSOSN do ICMS, ICMS próprio, ICMS ST, base e valores de IBS e CBS</caption>
                 <thead>
                     <tr class="group-header">
-                        <th colspan="5" class="gh-item">1. Identificação / Nota</th>
-                        <th colspan="3" class="gh-icms">2. ICMS (CST / CSOSN)</th>
-                        <th colspan="2" class="gh-bc text-right">3. Valoração & BC</th>
-                        <th colspan="3" class="gh-ibs text-center">4. IBS (UF / Mun)</th>
-                        <th colspan="2" class="gh-cbs text-center">5. CBS (Federal)</th>
+                        <th colspan="4" scope="colgroup" class="gh-item">1. Identificação / Nota</th>
+                        <th colspan="4" scope="colgroup" class="gh-icms">2. ICMS (CST / CSOSN)</th>
+                        <th colspan="2" scope="colgroup" class="gh-bc text-right">3. Valoração & BC</th>
+                        <th colspan="4" scope="colgroup" class="gh-ibs text-center">4. IBS (CST / UF / Mun)</th>
+                        <th colspan="2" scope="colgroup" class="gh-cbs text-center">5. CBS (Federal)</th>
                     </tr>
                     <tr class="col-header">
-                        <th class="text-center"><input type="checkbox" id="selectAll" checked onchange="toggleSelectAll(this.checked)"></th>
-                        <th class="text-center">#</th>
-                        <th>NF / Código / Descrição</th>
-                        <th class="text-center">NCM / CFOP</th>
-                        <th class="text-center">CST ICMS</th>
-                        <th class="text-right">BC ICMS</th>
-                        <th class="text-right">pICMS / vICMS</th>
-                        <th class="text-center">CST IBS / ClassTrib</th>
-                        <th class="text-right">Vlr. Produto</th>
-                        <th class="text-right">BC IBS/CBS</th>
-                        <th class="text-center">Alíq. UF / Mun</th>
-                        <th class="text-right">Vlr. UF / Mun</th>
-                        <th class="text-right" style="color:#fde047;">Vlr. IBS Total</th>
-                        <th class="text-center">Alíq. CBS</th>
-                        <th class="text-right" style="color:#38bdf8;">Vlr. CBS</th>
+                        <th scope="col" class="text-center"><input type="checkbox" id="selectAll" checked aria-label="Marcar ou desmarcar todos os itens filtrados" onchange="toggleSelectAll(this.checked)"></th>
+                        <th scope="col" class="text-center">#</th>
+                        <th scope="col">NF / Código / Descrição</th>
+                        <th scope="col" class="text-center">NCM / CFOP</th>
+                        <th scope="col" class="text-center">CST ICMS</th>
+                        <th scope="col" class="text-right">BC ICMS</th>
+                        <th scope="col" class="text-right">pICMS / vICMS</th>
+                        <th scope="col" class="text-right">ICMS ST (BC / alíq. / valor)</th>
+                        <th scope="col" class="text-right">Vlr. Produto</th>
+                        <th scope="col" class="text-right">BC IBS/CBS</th>
+                        <th scope="col" class="text-center">CST / ClassTrib IBS</th>
+                        <th scope="col" class="text-center">Alíq. UF / Mun</th>
+                        <th scope="col" class="text-right">Vlr. UF / Mun</th>
+                        <th scope="col" class="text-right" style="color:#fde047;">Vlr. IBS Total</th>
+                        <th scope="col" class="text-center">Alíq. CBS</th>
+                        <th scope="col" class="text-right" style="color:#38bdf8;">Vlr. CBS</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="15" class="empty-state">Nenhum arquivo XML carregado ainda. Selecione XMLs, uma pasta ou um .zip acima (modelos 55 e 65).</td></tr>
+                    <tr><td colspan="16" class="empty-state">Nenhum arquivo XML carregado ainda. Selecione XMLs, uma pasta ou um .zip acima (modelos 55 e 65).</td></tr>
                 </tbody>
             </table>
         </div>
@@ -280,8 +345,9 @@
             <div id="pageInfo" style="color:#475569;"></div>
             <div class="pages" id="pageButtons"></div>
         </div>
+    </main>
 
-        <footer class="footer">
+    <footer class="footer">
   <div class="container footer-grid-wrap footer-grid">
     <div>
       <strong class="ft">Análise XML — IBS e CBS</strong>
@@ -301,15 +367,15 @@
       <p>Lightning: <code class="donate-code" id="ln-address" data-full="lnbc1p4tt3ccpp5fntekr0ya4r4zd6durklrznte0zsg5jv3zcv83sss4u4efd8d7gsdqqcqzzsxqrrsssp5xg8m0ydtzqprnym2ruqp4260au726czc86p5y2mpl575mp8avdcs9qxpqysgqsjawffjrlkwpa77wf9zvsjx99z833h0dvjqjh0nxqph75rrkghrhzrfwdhj0fqt57l0nwl69c2sgutmm40mgzhkmqy9dpzcje69u09qpaewhvg" title="Invoice única — clique em copiar">lnbc1p4…paewhvg (invoice única)</code> <button class="btn-outline-l" data-copy="ln-address" type="button">Copiar</button><br><small><a href="#" data-reveal="ln-address" class="reveal-link">ver invoice completa</a></small></p>
     </div>
   </div>
-  <div class="container footer-base-wrap footer-base"><small>© 2026 Análise XML — IBS e CBS · Bases: EC 132/2023, LC 214/2025 · Sem valor fiscal isolado.</small></div>
+  <div class="container footer-base-wrap footer-base"><small>© 2026 Análise XML — IBS e CBS · v2.1 (out/2026) · Bases: EC 132/2023, LC 214/2025 e NT 2025.002 · Processamento 100% local · Sem valor fiscal isolado.</small></div>
 </footer>
-    </div>
 
 <script>
 let parsedItems = [];
 let loadedFiles = [];
 let loadErrors = [];
 let globalId = 0;
+let fileSeq = 0;
 let currentPage = 1;
 
 const dropZone = document.getElementById('dropZone');
@@ -317,172 +383,62 @@ const fileInput = document.getElementById('fileInput');
 const folderInput = document.getElementById('folderInput');
 const zipInput = document.getElementById('zipInput');
 
-dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault(); dropZone.classList.remove('dragover');
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) handleFileList(e.dataTransfer.files);
-});
-fileInput.addEventListener('change', (e) => { handleFileList(e.target.files); fileInput.value = ''; });
-folderInput.addEventListener('change', (e) => { handleFileList(e.target.files); folderInput.value = ''; });
-zipInput.addEventListener('change', (e) => { handleFileList(e.target.files); zipInput.value = ''; });
-
-async function handleFileList(fileList) {
-    const files = Array.from(fileList || []);
-    if (!files.length) return;
-    for (const f of files) {
-        const name = (f.name || '').toLowerCase();
-        try {
-            if (name.endsWith('.zip')) {
-                if (typeof JSZip === 'undefined') { loadErrors.push(f.name + ': leitor de ZIP indisponível (sem internet p/ CDN).'); continue; }
-                const zip = await JSZip.loadAsync(f);
-                const entries = Object.values(zip.files).filter(z => !z.dir && z.name.toLowerCase().endsWith('.xml'));
-                if (!entries.length) loadErrors.push(f.name + ': nenhum .xml dentro do ZIP.');
-                for (const entry of entries) {
-                    const text = await entry.async('text');
-                    parseXMLText(text, entry.name.split('/').pop());
-                }
-            } else if (name.endsWith('.xml') || f.type === 'text/xml') {
-                const text = await f.text();
-                parseXMLText(text, f.name);
-            } else {
-                loadErrors.push(f.name + ': ignorado (aceito somente .xml ou .zip).');
-            }
-        } catch (err) {
-            loadErrors.push(f.name + ': falha na leitura (' + (err && err.message ? err.message : err) + ').');
-        }
-    }
-    currentPage = 1;
-    renderAll();
+// ---------- Leitura de tags (com ou sem namespace) ----------
+function byTag(root, name) {
+    if (!root) return [];
+    let list = null;
+    if (root.getElementsByTagNameNS) list = root.getElementsByTagNameNS('*', name);
+    if (!list || !list.length) list = root.getElementsByTagName(name);
+    return Array.prototype.slice.call(list || []);
 }
-
-function parseXMLText(xmlText, sourceName) {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-    if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
-        loadErrors.push(sourceName + ': XML inválido.');
-        return;
-    }
-    const infNFe = xmlDoc.getElementsByTagName('infNFe')[0];
-    const ide = xmlDoc.getElementsByTagName('ide')[0];
-    const mod = ide ? getTagValue(ide, 'mod') : null;
-
-    if (!infNFe || !ide) {
-        loadErrors.push(sourceName + ': não é NF-e/NFC-e (sem <infNFe>/<ide>). NFS-e e outros modelos são ignorados.');
-        return;
-    }
-    if (mod !== '55' && mod !== '65') {
-        loadErrors.push(sourceName + ': modelo ' + (mod || 'desconhecido') + ' ignorado. Aceitos somente 55 e 65.');
-        return;
-    }
-    const dets = xmlDoc.getElementsByTagName('det');
-    if (!dets || dets.length === 0) {
-        loadErrors.push(sourceName + ' (mod ' + mod + '): nenhum item (<det>) encontrado.');
-        return;
-    }
-
-    const nNF = getTagValue(ide, 'nNF') || '-';
-    const serie = getTagValue(ide, 'serie') || '-';
-    const dhEmi = getTagValue(ide, 'dhEmi') || '';
-    const emitNode = xmlDoc.getElementsByTagName('emit')[0];
-    const emitNome = emitNode ? (getTagValue(emitNode, 'xNome') || getTagValue(emitNode, 'xFant') || '-') : '-';
-    const emitDoc = emitNode ? (getTagValue(emitNode, 'CNPJ') || getTagValue(emitNode, 'CPF') || '') : '';
-    let chave = '';
-    if (infNFe && infNFe.getAttribute('Id')) chave = infNFe.getAttribute('Id').replace(/^NFe/, '');
-    const fileId = 'F' + Date.now().toString(36) + '_' + loadedFiles.length;
-
-    let added = 0;
-    for (let i = 0; i < dets.length; i++) {
-        const det = dets[i];
-        const prod = det.getElementsByTagName('prod')[0];
-        if (!prod) continue;
-        const cProd = getTagValue(prod, 'cProd') || (i + 1);
-        const xProd = getTagValue(prod, 'xProd') || 'Produto sem descrição';
-        const ncm = getTagValue(prod, 'NCM') || '-';
-        const cfop = getTagValue(prod, 'CFOP') || '-';
-        const vProd = getTagNumber(prod, 'vProd') ?? 0;
-
-        const icms = parseICMS(det);
-
-        let cstIBS = null, cClassTrib = null, vBC_IBSCBS = null;
-        let pCBS = null, vCBS = null, pIBSUF = null, vIBSUF = null, pIBSMun = null, vIBSMun = null, vIBSTotal = null;
-        const ibscbsNode = det.getElementsByTagName('IBSCBS')[0];
-        if (ibscbsNode) {
-            cstIBS = getTagValue(ibscbsNode, 'CST');
-            cClassTrib = getTagValue(ibscbsNode, 'cClassTrib');
-            const g = ibscbsNode.getElementsByTagName('gIBSCBS')[0];
-            if (g) {
-                vBC_IBSCBS = getTagNumber(g, 'vBC');
-                const gU = g.getElementsByTagName('gIBSUF')[0];
-                if (gU) { pIBSUF = getTagNumber(gU, 'pIBSUF'); vIBSUF = getTagNumber(gU, 'vIBSUF'); }
-                const gM = g.getElementsByTagName('gIBSMun')[0];
-                if (gM) { pIBSMun = getTagNumber(gM, 'pIBSMun'); vIBSMun = getTagNumber(gM, 'vIBSMun'); }
-                const gC = g.getElementsByTagName('gCBS')[0];
-                if (gC) { pCBS = getTagNumber(gC, 'pCBS'); vCBS = getTagNumber(gC, 'vCBS'); }
-                const vIBSTag = getTagNumber(g, 'vIBS');
-                if (vIBSTag !== null) vIBSTotal = vIBSTag;
-                else if (vIBSUF !== null || vIBSMun !== null) vIBSTotal = (vIBSUF ?? 0) + (vIBSMun ?? 0);
-            }
-        }
-
-        parsedItems.push({
-            gid: ++globalId, fileId, fileName: sourceName, mod, nNF, serie, chave, emitNome,
-            nItem: det.getAttribute('nItem') || (i + 1),
-            code: cProd, description: xProd, ncm, cfop, vProd,
-            icmsTipo: icms.tipo, icmsOrig: icms.orig, icmsCST: icms.cstVal, icmsCSTLabel: icms.cstLabel,
-            icmsVBC: icms.vBC, icmsPICMS: icms.pICMS, icmsVICMS: icms.vICMS, icmsVICMSST: icms.vICMSST,
-            cstIBS, cClassTrib, vBC: vBC_IBSCBS,
-            pIBSUF, vIBSUF, pIBSMun, vIBSMun, vIBSTotal, pCBS, vCBS,
-            selected: true
-        });
-        added++;
-    }
-    loadedFiles.push({ fileId, fileName: sourceName, mod, nNF, serie, dhEmi, emitNome, emitDoc, chave, itemCount: added });
-}
-
-function parseICMS(det) {
-    const out = { tipo: null, orig: null, cstVal: null, cstLabel: null, vBC: null, pICMS: null, vICMS: null, vICMSST: null };
-    const icmsParent = det.getElementsByTagName('ICMS')[0];
-    if (!icmsParent) return out;
-    let first = null;
-    for (let k = 0; k < icmsParent.childNodes.length; k++) {
-        if (icmsParent.childNodes[k].nodeType === 1) { first = icmsParent.childNodes[k]; break; }
-    }
-    if (!first) return out;
-    out.tipo = first.tagName || first.nodeName;
-    out.orig = getTagValue(first, 'orig');
-    const cst = getTagValue(first, 'CST');
-    const csosn = getTagValue(first, 'CSOSN');
-    if (cst !== null) { out.cstVal = cst; out.cstLabel = 'CST'; }
-    else if (csosn !== null) { out.cstVal = csosn; out.cstLabel = 'CSOSN'; }
-    out.vBC = getTagNumber(first, 'vBC');
-    out.pICMS = getTagNumber(first, 'pICMS');
-    out.vICMS = getTagNumber(first, 'vICMS');
-    const st1 = getTagNumber(first, 'vICMSSTRet');
-    const st2 = getTagNumber(first, 'vICMSST');
-    out.vICMSST = st1 !== null ? st1 : st2;
-    return out;
-}
-
+function firstTag(root, name) { return byTag(root, name)[0] || null; }
 function getTagValue(parent, tagName) {
-    if (!parent) return null;
-    const el = parent.getElementsByTagName(tagName)[0];
-    if (!el || el.textContent === null || el.textContent === undefined) return null;
-    const txt = el.textContent.trim();
+    const el = firstTag(parent, tagName);
+    if (!el) return null;
+    const txt = (el.textContent || '').trim();
     return txt === '' ? null : txt;
 }
 function getTagNumber(parent, tagName) {
     const raw = getTagValue(parent, tagName);
     if (raw === null) return null;
-    const n = parseFloat(raw.replace(',', '.'));
-    return isNaN(n) ? null : n;
+    const n = Number(raw.replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+}
+function subTagNumber(parent, group, tagName) {
+    const g = firstTag(parent, group);
+    return g ? getTagNumber(g, tagName) : null;
 }
 function esc(s) {
     return String(s === null || s === undefined ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+function brl(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+function fmtNum(v) { return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtMoney(v) { return (v === null || v === undefined) ? '<span class="empty-cell" title="Tag não informada no XML">—</span>' : ('R$ ' + fmtNum(v)); }
+function fmtAliq(v) { return (v === null || v === undefined) ? '<span class="empty-cell" title="Tag não informada no XML">—</span>' : (v.toFixed(2) + '%'); }
+function fmtTxt(v) { return (v === null || v === undefined || v === '') ? '<span class="empty-cell" title="Tag não informada no XML">—</span>' : esc(v); }
+function pushError(msg) { loadErrors.push(msg); }
 
-// Tabela CST/CSOSN do ICMS (descrições oficiais resumidas)
+// ---------- Situação da nota (protNFe) ----------
+const STATUS_MAP = {
+    '100': ['Autorizada', 'ok', true],
+    '150': ['Autorizada (fora de prazo)', 'ok', true],
+    '101': ['Cancelada', 'bad', false],
+    '151': ['Cancelada (fora de prazo)', 'bad', false],
+    '155': ['Cancelada (substituição)', 'bad', false],
+    '110': ['Denegada', 'bad', false],
+    '301': ['Denegada (irregularidade)', 'bad', false],
+    '302': ['Denegada (irregularidade)', 'bad', false],
+    '204': ['Duplicidade', 'bad', false]
+};
+function statusInfo(cStat) {
+    if (!cStat) return { code: '', label: 'Sem protocolo', cls: 'warn', counts: true };
+    const m = STATUS_MAP[cStat];
+    if (m) return { code: cStat, label: m[0], cls: m[1], counts: m[2] };
+    return { code: cStat, label: 'cStat ' + cStat, cls: 'warn', counts: true };
+}
+
+// ---------- Tabelas CST/CSOSN ----------
 const ORIG_DESC = {
     '0': 'Nacional, exceto códigos 3 a 5',
     '1': 'Estrangeira — importação direta (exceto cód. 6)',
@@ -523,13 +479,326 @@ function cstCsosnDesc(label, val) {
     return CST_DESC[v] || '';
 }
 
+// ---------- Parsing ----------
+function readProtocols(xmlDoc) {
+    const map = {};
+    byTag(xmlDoc, 'protNFe').forEach(prot => {
+        const ip = firstTag(prot, 'infProt');
+        if (!ip) return;
+        const ch = getTagValue(ip, 'chNFe');
+        if (ch) map[ch] = { cStat: getTagValue(ip, 'cStat'), xMotivo: getTagValue(ip, 'xMotivo') };
+    });
+    return map;
+}
+
+function readNoteTotals(infNFe) {
+    const total = firstTag(infNFe, 'total');
+    const icmsTot = total ? firstTag(total, 'ICMSTot') : null;
+    const ibsTot = total ? firstTag(total, 'IBSCBSTot') : null;
+    return {
+        vProd: icmsTot ? getTagNumber(icmsTot, 'vProd') : null,
+        vICMS: icmsTot ? getTagNumber(icmsTot, 'vICMS') : null,
+        vICMSST: icmsTot ? (getTagNumber(icmsTot, 'vICMSST') ?? getTagNumber(icmsTot, 'vST')) : null,
+        vNF: icmsTot ? getTagNumber(icmsTot, 'vNF') : null,
+        vBCIBSCBS: ibsTot ? getTagNumber(ibsTot, 'vBCIBSCBS') : null,
+        vIBS: ibsTot ? (getTagNumber(ibsTot, 'vIBS') ?? subTagNumber(ibsTot, 'gIBS', 'vIBS')) : null,
+        vCBS: ibsTot ? (getTagNumber(ibsTot, 'vCBS') ?? subTagNumber(ibsTot, 'gCBS', 'vCBS')) : null
+    };
+}
+
+function parseICMS(det) {
+    const out = {
+        tipo: null, orig: null, cstVal: null, cstLabel: null,
+        vBC: null, pICMS: null, vICMS: null,
+        stBC: null, stRate: null, stValue: null, stKind: null, stOwn: null
+    };
+    const parent = firstTag(det, 'ICMS');
+    if (!parent) return out;
+    let node = null;
+    for (let k = 0; k < parent.children.length; k++) { node = parent.children[k]; break; }
+    if (!node) return out;
+    out.tipo = node.localName || node.tagName;
+    out.orig = getTagValue(node, 'orig');
+    const cst = getTagValue(node, 'CST');
+    const csosn = getTagValue(node, 'CSOSN');
+    if (cst !== null) { out.cstVal = cst; out.cstLabel = 'CST'; }
+    else if (csosn !== null) { out.cstVal = csosn; out.cstLabel = 'CSOSN'; }
+    out.vBC = getTagNumber(node, 'vBC');
+    out.pICMS = getTagNumber(node, 'pICMS');
+    out.vICMS = getTagNumber(node, 'vICMS');
+
+    const vBCST = getTagNumber(node, 'vBCST');
+    const pICMSST = getTagNumber(node, 'pICMSST');
+    const vICMSST = getTagNumber(node, 'vICMSST');
+    const vBCSTRet = getTagNumber(node, 'vBCSTRet');
+    const pICMSSTRet = getTagNumber(node, 'pICMSSTRet');
+    const vICMSSTRet = getTagNumber(node, 'vICMSSTRet');
+
+    out.stBC = vBCST !== null ? vBCST : vBCSTRet;
+    out.stRate = pICMSST !== null ? pICMSST : pICMSSTRet;
+    out.stValue = vICMSST !== null ? vICMSST : vICMSSTRet;
+    out.stKind = vICMSST !== null ? 'recolhido' : (vICMSSTRet !== null ? 'retido' : null);
+    out.stOwn = vICMSST;
+    return out;
+}
+
+const IBS_SPECIAL_GROUPS = ['gIBSCBSMono', 'gTribRegular', 'gCredPres', 'gTransfCred', 'gAjusteCompet'];
+function parseIBSCBS(det) {
+    const out = {
+        cst: null, cClassTrib: null, vBC: null,
+        pIBSUF: null, vIBSUF: null, pIBSMun: null, vIBSMun: null, vIBSTotal: null,
+        pCBS: null, vCBS: null, special: []
+    };
+    const root = firstTag(det, 'IBSCBS');
+    if (!root) return out;
+    out.cst = getTagValue(root, 'CST');
+    out.cClassTrib = getTagValue(root, 'cClassTrib');
+    const g = firstTag(root, 'gIBSCBS');
+    if (g) {
+        out.vBC = getTagNumber(g, 'vBC');
+        const gu = firstTag(g, 'gIBSUF');
+        if (gu) { out.pIBSUF = getTagNumber(gu, 'pIBSUF'); out.vIBSUF = getTagNumber(gu, 'vIBSUF'); }
+        const gm = firstTag(g, 'gIBSMun');
+        if (gm) { out.pIBSMun = getTagNumber(gm, 'pIBSMun'); out.vIBSMun = getTagNumber(gm, 'vIBSMun'); }
+        const gc = firstTag(g, 'gCBS');
+        if (gc) { out.pCBS = getTagNumber(gc, 'pCBS'); out.vCBS = getTagNumber(gc, 'vCBS'); }
+        out.vIBSTotal = getTagNumber(g, 'vIBS');
+        if (out.vIBSTotal === null && (out.vIBSUF !== null || out.vIBSMun !== null)) {
+            out.vIBSTotal = (out.vIBSUF ?? 0) + (out.vIBSMun ?? 0);
+        }
+    }
+    IBS_SPECIAL_GROUPS.forEach(name => { if (firstTag(root, name)) out.special.push(name); });
+    return out;
+}
+
+function parseXMLText(xmlText, sourceName) {
+    const xmlDoc = new DOMParser().parseFromString(xmlText, 'text/xml');
+    if (byTag(xmlDoc, 'parsererror').length > 0) {
+        pushError(sourceName + ': XML inválido.');
+        return { ok: false, files: 0, items: 0 };
+    }
+    const infs = byTag(xmlDoc, 'infNFe');
+    if (!infs.length) {
+        pushError(sourceName + ': não é NF-e/NFC-e (sem <infNFe>). NFS-e e outros modelos são ignorados.');
+        return { ok: false, files: 0, items: 0 };
+    }
+    const protocols = readProtocols(xmlDoc);
+    let addedFiles = 0, addedItems = 0;
+
+    infs.forEach((infNFe, idx) => {
+        const ide = firstTag(infNFe, 'ide');
+        if (!ide) {
+            pushError(sourceName + ' (nota ' + (idx + 1) + '): sem <ide>, ignorada.');
+            return;
+        }
+        const mod = getTagValue(ide, 'mod');
+        if (mod !== '55' && mod !== '65') {
+            pushError(sourceName + ': modelo ' + (mod || 'desconhecido') + ' ignorado. Aceitos somente 55 e 65.');
+            return;
+        }
+        const dets = byTag(infNFe, 'det');
+        if (!dets.length) {
+            pushError(sourceName + ' (mod ' + mod + '): nenhum item (<det>) encontrado.');
+            return;
+        }
+
+        const nNF = getTagValue(ide, 'nNF') || '-';
+        const serie = getTagValue(ide, 'serie') || '-';
+        const dhEmi = getTagValue(ide, 'dhEmi') || '';
+        const emitNode = firstTag(infNFe, 'emit');
+        const emitNome = emitNode ? (getTagValue(emitNode, 'xNome') || getTagValue(emitNode, 'xFant') || '-') : '-';
+        const emitDoc = emitNode ? (getTagValue(emitNode, 'CNPJ') || getTagValue(emitNode, 'CPF') || '') : '';
+        const chave = (infNFe.getAttribute('Id') || '').replace(/^NFe/, '');
+        const dedupeKey = chave || [mod, serie, nNF, emitDoc, dhEmi].join('|');
+        if (loadedFiles.some(f => f.dedupeKey === dedupeKey)) {
+            pushError(sourceName + ': NF ' + nNF + (chave ? ' (chave ' + chave + ')' : '') + ' já carregada — duplicada ignorada.');
+            return;
+        }
+
+        const proto = protocols[chave] || {};
+        const status = statusInfo(proto.cStat);
+        const noteTotals = readNoteTotals(infNFe);
+        const fileId = 'F' + (++fileSeq);
+        let added = 0;
+
+        dets.forEach((det, i) => {
+            const prod = firstTag(det, 'prod');
+            if (!prod) return;
+            const icms = parseICMS(det);
+            const ibs = parseIBSCBS(det);
+            parsedItems.push({
+                gid: ++globalId,
+                fileId,
+                fileName: sourceName,
+                part: idx + 1,
+                partTotal: infs.length,
+                mod,
+                nNF,
+                serie,
+                dhEmi,
+                chave,
+                emitNome,
+                emitDoc,
+                status,
+                countable: status.counts,
+                nItem: det.getAttribute('nItem') || String(i + 1),
+                code: getTagValue(prod, 'cProd') || String(i + 1),
+                description: getTagValue(prod, 'xProd') || 'Produto sem descrição',
+                ncm: getTagValue(prod, 'NCM') || null,
+                cfop: getTagValue(prod, 'CFOP') || null,
+                vProd: getTagNumber(prod, 'vProd'),
+                icmsTipo: icms.tipo,
+                icmsOrig: icms.orig,
+                icmsCST: icms.cstVal,
+                icmsCSTLabel: icms.cstLabel,
+                icmsVBC: icms.vBC,
+                icmsPICMS: icms.pICMS,
+                icmsVICMS: icms.vICMS,
+                icmsSTBC: icms.stBC,
+                icmsSTRate: icms.stRate,
+                icmsST: icms.stValue,
+                icmsSTKind: icms.stKind,
+                icmsSTOwn: icms.stOwn,
+                cstIBS: ibs.cst,
+                cClassTrib: ibs.cClassTrib,
+                vBC: ibs.vBC,
+                pIBSUF: ibs.pIBSUF,
+                vIBSUF: ibs.vIBSUF,
+                pIBSMun: ibs.pIBSMun,
+                vIBSMun: ibs.vIBSMun,
+                vIBSTotal: ibs.vIBSTotal,
+                pCBS: ibs.pCBS,
+                vCBS: ibs.vCBS,
+                ibsSpecial: ibs.special,
+                selected: true
+            });
+            added++;
+        });
+
+        if (!added) {
+            pushError(sourceName + ' (mod ' + mod + ', NF ' + nNF + '): itens sem <prod>, nota ignorada.');
+            return;
+        }
+        loadedFiles.push({
+            fileId, fileName: sourceName, mod, nNF, serie, dhEmi, emitNome, emitDoc,
+            chave, dedupeKey, itemCount: added, status, noteTotals,
+            part: idx + 1, partTotal: infs.length
+        });
+        addedFiles++;
+        addedItems += added;
+    });
+
+    return { ok: addedFiles > 0, files: addedFiles, items: addedItems };
+}
+
+// ---------- Entrada de arquivos ----------
+async function handleFileList(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    for (const f of files) {
+        const name = (f.name || '').toLowerCase();
+        try {
+            if (name.endsWith('.zip')) {
+                if (typeof JSZip === 'undefined') {
+                    pushError(f.name + ': leitor de ZIP indisponível (vendor/jszip.min.js não carregado).');
+                    continue;
+                }
+                const zip = await JSZip.loadAsync(f);
+                const entries = Object.values(zip.files)
+                    .filter(z => !z.dir && z.name.toLowerCase().endsWith('.xml'))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                if (!entries.length) pushError(f.name + ': nenhum .xml dentro do ZIP.');
+                for (const entry of entries) {
+                    try {
+                        const text = await entry.async('text');
+                        parseXMLText(text, f.name + '/' + entry.name);
+                    } catch (err) {
+                        pushError(f.name + '/' + entry.name + ': falha ao ler o XML (' + (err && err.message ? err.message : err) + ').');
+                    }
+                }
+            } else if (name.endsWith('.xml') || f.type === 'text/xml' || f.type === 'application/xml') {
+                const text = await f.text();
+                parseXMLText(text, f.name);
+            } else {
+                pushError(f.name + ': ignorado (aceito somente .xml ou .zip).');
+            }
+        } catch (err) {
+            pushError(f.name + ': falha na leitura (' + (err && err.message ? err.message : err) + ').');
+        }
+    }
+    currentPage = 1;
+    renderAll();
+}
+
+function readEntry(entry, out) {
+    return new Promise(resolve => {
+        if (entry.isFile) {
+            entry.file(file => { out.push(file); resolve(); }, () => resolve());
+        } else if (entry.isDirectory) {
+            const reader = entry.createReader();
+            const readBatch = () => {
+                reader.readEntries(entries => {
+                    if (!entries.length) return resolve();
+                    Promise.all(entries.map(e => readEntry(e, out))).then(readBatch, readBatch);
+                }, () => resolve());
+            };
+            readBatch();
+        } else {
+            resolve();
+        }
+    });
+}
+async function collectDroppedFiles(dataTransfer) {
+    const items = dataTransfer.items;
+    if (!items || !items.length) return Array.from(dataTransfer.files || []);
+    const entries = [];
+    for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        if (it.kind !== 'file') continue;
+        const entry = it.webkitGetAsEntry && it.webkitGetAsEntry();
+        if (entry) entries.push(entry);
+    }
+    if (!entries.length) return Array.from(dataTransfer.files || []);
+    const out = [];
+    await Promise.all(entries.map(e => readEntry(e, out)));
+    return out;
+}
+
+document.getElementById('btnFiles').addEventListener('click', () => fileInput.click());
+document.getElementById('btnFolder').addEventListener('click', () => folderInput.click());
+document.getElementById('btnZip').addEventListener('click', () => zipInput.click());
+
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    try {
+        const files = await collectDroppedFiles(e.dataTransfer);
+        if (files.length) await handleFileList(files);
+        else pushError('Nenhum arquivo encontrado no item arrastado.');
+    } catch (err) {
+        pushError('Falha ao ler o que foi arrastado (' + (err && err.message ? err.message : err) + ').');
+    }
+    renderAll();
+});
+fileInput.addEventListener('change', (e) => { handleFileList(e.target.files); fileInput.value = ''; });
+folderInput.addEventListener('change', (e) => { handleFileList(e.target.files); folderInput.value = ''; });
+zipInput.addEventListener('change', (e) => { handleFileList(e.target.files); zipInput.value = ''; });
+
+// ---------- Filtros e tabela ----------
 function getFiltered() {
     const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
     const modF = document.getElementById('modFilter').value;
     return parsedItems.filter(it => {
         if (modF && it.mod !== modF) return false;
         if (!q) return true;
-        const hay = (it.code + ' ' + it.description + ' ' + it.ncm + ' ' + it.cfop + ' ' + (it.icmsCST||'') + ' ' + cstCsosnDesc(it.icmsCSTLabel, it.icmsCST) + ' ' + origDesc(it.icmsOrig) + ' ' + (it.cstIBS||'') + ' ' + (it.cClassTrib||'') + ' ' + it.nNF + ' ' + it.fileName).toLowerCase();
+        const hay = [
+            it.code, it.description, it.ncm, it.cfop, it.icmsCST, it.icmsTipo,
+            cstCsosnDesc(it.icmsCSTLabel, it.icmsCST), origDesc(it.icmsOrig),
+            it.cstIBS, it.cClassTrib, it.nNF, it.serie, it.fileName, it.emitNome,
+            it.chave, it.status.label
+        ].join(' ').toLowerCase();
         return hay.includes(q);
     });
 }
@@ -538,43 +807,19 @@ function onFilterChange() { currentPage = 1; renderTable(); }
 function onPageSizeChange() { currentPage = 1; renderTable(); }
 function goPage(p) { currentPage = p; renderTable(); }
 
-function renderAll() { renderFiles(); renderTable(); }
-
-function renderFiles() {
-    const panel = document.getElementById('filesPanel');
-    const chips = document.getElementById('fileChips');
-    document.getElementById('fileCount').innerText = loadedFiles.length;
-    panel.style.display = loadedFiles.length ? 'block' : 'none';
-    chips.innerHTML = '';
-    loadedFiles.forEach(f => {
-        const el = document.createElement('span');
-        el.className = 'file-chip';
-        el.innerHTML = '<span class="mod-badge">' + esc(f.mod) + '</span><span><strong>NF ' + esc(f.nNF) + '</strong> · ' + esc(f.fileName) + ' · ' + esc(f.emitNome).substring(0, 32) + ' (' + f.itemCount + ' itens)</span>';
-        const btn = document.createElement('button');
-        btn.title = 'Remover nota';
-        btn.innerText = '✕';
-        btn.onclick = () => removeFile(f.fileId);
-        el.appendChild(btn);
-        chips.appendChild(el);
-    });
-    const eb = document.getElementById('errorBox');
-    if (loadErrors.length) {
-        eb.style.display = 'block';
-        eb.innerHTML = '<strong>⚠ ' + loadErrors.length + ' aviso(s):</strong><br>• ' + loadErrors.slice(-8).map(esc).join('<br>• ');
-    } else eb.style.display = 'none';
+function statusBadge(status) {
+    const title = status.code ? ('cStat ' + status.code) : 'Arquivo sem protNFe (situação não informada)';
+    return '<span class="status-badge ' + status.cls + '" title="' + esc(title) + '">' + esc(status.label) + '</span>';
 }
 
-function removeFile(fileId) {
-    loadedFiles = loadedFiles.filter(f => f.fileId !== fileId);
-    parsedItems = parsedItems.filter(i => i.fileId !== fileId);
-    currentPage = 1;
-    renderAll();
-}
-function clearAll() {
-    parsedItems = []; loadedFiles = []; loadErrors = []; currentPage = 1;
-    document.getElementById('searchInput').value = '';
-    document.getElementById('modFilter').value = '';
-    renderAll();
+function stHtml(item) {
+    if (item.icmsSTBC === null && item.icmsSTRate === null && item.icmsST === null) return '<span class="empty-cell">—</span>';
+    let out = '';
+    if (item.icmsSTBC !== null) out += '<div style="font-size:10px;color:#5d6e80;">BC R$ ' + fmtNum(item.icmsSTBC) + '</div>';
+    if (item.icmsSTRate !== null) out += '<div style="font-size:10px;color:#5d6e80;">' + fmtNum(item.icmsSTRate) + '%</div>';
+    if (item.icmsST !== null) out += '<div style="font-weight:700;">R$ ' + fmtNum(item.icmsST) + '</div>';
+    if (item.icmsSTKind) out += '<div style="font-size:10px;color:#5d6e80;">' + esc(item.icmsSTKind) + '</div>';
+    return out;
 }
 
 function renderTable() {
@@ -587,36 +832,38 @@ function renderTable() {
     const start = (currentPage - 1) * pageSize;
     const pageItems = filtered.slice(start, start + pageSize);
 
-    document.getElementById('itemCountTag').innerText = '(' + filtered.length + ' itens · ' + loadedFiles.length + ' nota(s) · pág. ' + currentPage + '/' + totalPages + ')';
+    document.getElementById('itemCountTag').innerText = '(' + filtered.length + ' itens · ' +
+        new Set(filtered.map(i => i.fileId)).size + ' nota(s) · pág. ' + currentPage + '/' + totalPages + ')';
 
     if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="15" class="empty-state">Nenhum item para exibir. Carregue XMLs (55/65) ou ajuste o filtro.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="16" class="empty-state">Nenhum item para exibir. Carregue XMLs (55/65) ou ajuste o filtro.</td></tr>';
     } else {
-        const fmtNum = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const fmtMoney = (v) => (v === null || v === undefined) ? '<span class="empty-cell">—</span>' : ('R$ ' + fmtNum(v));
-        const fmtAliq = (v) => (v === null || v === undefined) ? '<span class="empty-cell">—</span>' : (v.toFixed(2) + '%');
-        const fmtTxt = (v) => (v === null || v === undefined || v === '') ? '<span class="empty-cell">—</span>' : esc(v);
         pageItems.forEach((item) => {
             const tr = document.createElement('tr');
+            if (!item.countable) tr.style.opacity = '.62';
             const icmsBadge = item.icmsCST === null
                 ? '<span class="empty-cell">—</span>'
                 : '<span class="badge-icms" title="' + esc(cstCsosnDesc(item.icmsCSTLabel, item.icmsCST)) + '">' + esc(item.icmsCSTLabel || '') + ' ' + esc(item.icmsCST) + '</span>' +
                   '<div class="cst-desc">' + esc(cstCsosnDesc(item.icmsCSTLabel, item.icmsCST)) + '</div>' +
                   (item.icmsTipo ? '<div style="font-size:10px;color:#5d6e80;" title="' + esc(origDesc(item.icmsOrig)) + '">' + esc(item.icmsTipo) + (item.icmsOrig !== null ? ' · orig ' + esc(item.icmsOrig) + (origDesc(item.icmsOrig) ? ' — ' + esc(origDesc(item.icmsOrig)) : '') : '') + '</div>' : '');
+            const special = item.ibsSpecial.length
+                ? '<div class="flag-note" title="' + esc(item.ibsSpecial.join(', ')) + '">IBS/CBS: grupo especial não detalhado</div>'
+                : '';
+            const nfLabel = 'NF ' + esc(item.nNF) + ' · mod ' + esc(item.mod) + (item.partTotal > 1 ? ' · nota ' + item.part + '/' + item.partTotal : '');
             tr.innerHTML =
-                '<td class="text-center"><input type="checkbox" ' + (item.selected ? 'checked' : '') + ' data-gid="' + item.gid + '" onchange="toggleItem(' + item.gid + ', this.checked)"></td>' +
+                '<td class="text-center"><input type="checkbox" ' + (item.selected ? 'checked' : '') + ' data-gid="' + item.gid + '" aria-label="Selecionar item ' + esc(item.nItem) + ' da NF ' + esc(item.nNF) + '" onchange="toggleItem(' + item.gid + ', this.checked)"></td>' +
                 '<td class="text-center" style="color:#5d6e80;font-weight:600;">' + esc(item.nItem) + '</td>' +
-                '<td><div class="nf-tag"><strong>NF ' + esc(item.nNF) + '</strong> · mod ' + esc(item.mod) + ' · ' + esc(item.fileName) + '</div>' +
+                '<td><div class="nf-tag" title="Arquivo: ' + esc(item.fileName) + '"><strong>' + nfLabel + '</strong> ' + statusBadge(item.status) + '</div>' +
                 '<div style="font-weight:700;">' + esc(item.code) + '</div>' +
                 '<div style="font-size:11px;color:#5d6e80;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(item.description) + '">' + esc(item.description) + '</div></td>' +
-                '<td class="text-center"><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px;">' + esc(item.ncm) + '</code><div style="font-size:11px;color:#5d6e80;">' + esc(item.cfop) + '</div></td>' +
+                '<td class="text-center"><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px;">' + fmtTxt(item.ncm) + '</code><div style="font-size:11px;color:#5d6e80;">' + fmtTxt(item.cfop) + '</div></td>' +
                 '<td class="text-center">' + icmsBadge + '</td>' +
-                '<td class="text-right">' + (item.icmsVBC === null ? '<span class="empty-cell">—</span>' : 'R$ ' + fmtNum(item.icmsVBC)) + '</td>' +
-                '<td class="text-right"><div>' + fmtAliq(item.icmsPICMS) + '</div><div style="font-weight:700;">' + fmtMoney(item.icmsVICMS) + '</div>' +
-                (item.icmsVICMSST !== null ? '<div style="font-size:10px;color:#5d6e80;">ST R$ ' + fmtNum(item.icmsVICMSST) + '</div>' : '') + '</td>' +
-                '<td class="text-center"><span class="badge-cst">' + fmtTxt(item.cstIBS) + ' / ' + fmtTxt(item.cClassTrib) + '</span></td>' +
-                '<td class="text-right">R$ ' + fmtNum(item.vProd) + '</td>' +
+                '<td class="text-right">' + fmtMoney(item.icmsVBC) + '</td>' +
+                '<td class="text-right"><div>' + fmtAliq(item.icmsPICMS) + '</div><div style="font-weight:700;">' + fmtMoney(item.icmsVICMS) + '</div></td>' +
+                '<td class="text-right">' + stHtml(item) + '</td>' +
+                '<td class="text-right">' + fmtMoney(item.vProd) + '</td>' +
                 '<td class="text-right">' + (item.vBC === null ? '<span class="empty-cell">—</span>' : '<span class="badge-bc">R$ ' + fmtNum(item.vBC) + '</span>') + '</td>' +
+                '<td class="text-center"><span class="badge-cst">' + fmtTxt(item.cstIBS) + ' / ' + fmtTxt(item.cClassTrib) + '</span>' + special + '</td>' +
                 '<td class="text-center"><div><strong style="color:#b45309;">' + fmtAliq(item.pIBSUF) + '</strong> <span style="font-size:10px;color:#5d6e80;">UF</span></div>' +
                 '<div style="font-size:11px;color:#5d6e80;">' + fmtAliq(item.pIBSMun) + ' <span style="font-size:10px;color:#5d6e80;">Mun</span></div></td>' +
                 '<td class="text-right"><div>' + fmtMoney(item.vIBSUF) + '</div><div style="font-size:11px;color:#5d6e80;">' + fmtMoney(item.vIBSMun) + '</div></td>' +
@@ -626,18 +873,29 @@ function renderTable() {
             tbody.appendChild(tr);
         });
     }
+    syncSelectAll(filtered);
     renderPagination(filtered.length, pageSize, totalPages, start, pageItems.length);
-    calculateTotals();
+    calculateTotals(filtered);
+    renderAudit();
+}
+
+function syncSelectAll(filtered) {
+    const sa = document.getElementById('selectAll');
+    if (!sa) return;
+    const selected = filtered.filter(i => i.selected).length;
+    sa.checked = filtered.length > 0 && selected === filtered.length;
+    sa.indeterminate = selected > 0 && selected < filtered.length;
 }
 
 function renderPagination(total, pageSize, totalPages, start, shown) {
     const pag = document.getElementById('pagination');
     pag.style.display = total ? 'flex' : 'none';
-    document.getElementById('pageInfo').innerText = total ? ('Exibindo ' + (total ? start + 1 : 0) + '–' + (start + shown) + ' de ' + total + ' itens') : '';
+    document.getElementById('pageInfo').innerText = total ? ('Exibindo ' + (start + 1) + '–' + (start + shown) + ' de ' + total + ' itens') : '';
     const box = document.getElementById('pageButtons');
     box.innerHTML = '';
     const mk = (label, page, disabled, active) => {
         const b = document.createElement('button');
+        b.type = 'button';
         b.className = 'page-btn' + (active ? ' active' : '');
         b.innerText = label;
         b.disabled = !!disabled;
@@ -646,7 +904,7 @@ function renderPagination(total, pageSize, totalPages, start, shown) {
     };
     mk('«', 1, currentPage === 1);
     mk('‹', Math.max(1, currentPage - 1), currentPage === 1);
-    let p0 = Math.max(1, currentPage - 3), p1 = Math.min(totalPages, currentPage + 3);
+    const p0 = Math.max(1, currentPage - 3), p1 = Math.min(totalPages, currentPage + 3);
     if (p0 > 1) { mk('1', 1); if (p0 > 2) { const s = document.createElement('span'); s.innerText = '…'; box.appendChild(s); } }
     for (let p = p0; p <= p1; p++) mk(String(p), p, false, p === currentPage);
     if (p1 < totalPages) { if (p1 < totalPages - 1) { const s = document.createElement('span'); s.innerText = '…'; box.appendChild(s); } mk(String(totalPages), totalPages); }
@@ -657,53 +915,260 @@ function renderPagination(total, pageSize, totalPages, start, shown) {
 function toggleItem(gid, isChecked) {
     const it = parsedItems.find(x => x.gid === gid);
     if (it) it.selected = isChecked;
-    calculateTotals();
+    syncSelectAll(getFiltered());
+    calculateTotals(getFiltered());
 }
 function toggleSelectAll(checked) {
-    const filtered = getFiltered();
-    const target = filtered.length ? filtered : parsedItems;
-    target.forEach(item => item.selected = checked);
-    const sa = document.getElementById('selectAll');
-    if (sa) sa.checked = checked;
+    getFiltered().forEach(item => { item.selected = checked; });
     renderTable();
 }
 
-function calculateTotals() {
-    let totalProd = 0, totalBC = 0, totalCBS = 0, totalIBS = 0, totalICMS = 0;
-    parsedItems.forEach(item => {
-        if (item.selected) {
-            totalProd += item.vProd;
-            totalBC += item.vBC ?? 0;
-            totalCBS += item.vCBS ?? 0;
-            totalIBS += item.vIBSTotal ?? 0;
-            totalICMS += item.icmsVICMS ?? 0;
-        }
+// ---------- Totais (filtro + seleção; canceladas fora) ----------
+function sumField(list, key) {
+    let sum = 0, missing = 0, found = 0;
+    list.forEach(it => {
+        const v = it[key];
+        if (v === null || v === undefined) missing++;
+        else { sum += v; found++; }
     });
-    const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('lblTotalProd').innerText = fmt(totalProd);
-    document.getElementById('lblTotalBC').innerText = fmt(totalBC);
-    document.getElementById('lblTotalIBS').innerText = fmt(totalIBS);
-    document.getElementById('lblTotalCBS').innerText = fmt(totalCBS);
-    document.getElementById('lblTotalICMS').innerText = fmt(totalICMS);
-    document.getElementById('lblFiles').innerText = loadedFiles.length + ' / ' + parsedItems.length;
-    document.getElementById('hdrIbsTotal').innerText = fmt(totalIBS);
-    document.getElementById('hdrCbsTotal').innerText = fmt(totalCBS);
-    document.getElementById('hdrIcmsTotal').innerText = fmt(totalICMS);
+    return { sum, missing, found };
+}
+function computeTotals(list) {
+    const chosen = list.filter(i => i.selected && i.countable);
+    return {
+        selected: chosen.length,
+        excluded: list.filter(i => i.selected && !i.countable).length,
+        vProd: sumField(chosen, 'vProd'),
+        vBC: sumField(chosen, 'vBC'),
+        vICMS: sumField(chosen, 'icmsVICMS'),
+        vICMSST: sumField(chosen, 'icmsST'),
+        vIBS: sumField(chosen, 'vIBSTotal'),
+        vCBS: sumField(chosen, 'vCBS')
+    };
+}
+function sumText(s) {
+    if (!s.found && !s.missing) return '—';
+    if (!s.found) return '— / não informado';
+    return brl(s.sum) + (s.missing ? ' *' : '');
+}
+function sumDesc(s, base) {
+    if (!s.found && !s.missing) return base + ' · nenhum item no filtro';
+    if (!s.found) return base + ' · tag ausente em ' + s.missing + ' item(ns)';
+    return base + (s.missing ? ' · ' + s.missing + ' item(ns) sem a tag (*)' : '');
+}
+function setCard(id, s, base) {
+    document.getElementById(id).innerText = sumText(s);
+    document.getElementById(id + 'Desc').innerText = sumDesc(s, base);
+}
+function setStat(id, s) {
+    const el = document.getElementById(id);
+    el.innerText = s.found ? brl(s.sum) : '—';
+    el.title = s.found ? (s.missing ? s.missing + ' item(ns) sem a tag' : '') : 'Tag não informada no XML';
 }
 
+function calculateTotals(filtered) {
+    const list = filtered || getFiltered();
+    const t = computeTotals(list);
+    setCard('lblTotalProd', t.vProd, 'Soma do valor nominal dos itens');
+    setCard('lblTotalBC', t.vBC, 'Somente valor do XML');
+    setCard('lblTotalICMS', t.vICMS, 'ICMS próprio dos itens');
+    setCard('lblTotalICMSST', t.vICMSST, 'Soma de vICMSST e vICMSSTRet');
+    setCard('lblTotalIBS', t.vIBS, 'Soma de IBS UF + IBS Mun');
+    setCard('lblTotalCBS', t.vCBS, 'Contribuição sobre Bens e Serviços');
+
+    const notes = new Set(list.map(i => i.fileId)).size;
+    document.getElementById('lblFiles').innerText = list.length + ' itens';
+    document.getElementById('lblFilesDesc').innerText = notes + ' nota(s) no filtro · ' + t.selected + ' marcado(s)' +
+        (t.excluded ? ' · ' + t.excluded + ' fora do total (cancelada/denegada)' : '');
+
+    setStat('hdrIbsTotal', t.vIBS);
+    setStat('hdrCbsTotal', t.vCBS);
+    setStat('hdrIcmsTotal', t.vICMS);
+    setStat('hdrIcmsStTotal', t.vICMSST);
+}
+
+// ---------- Conferência XML × itens ----------
+function auditAdd(checks, label, xmlVal, field, items, note) {
+    const s = sumField(items, field);
+    if (xmlVal === null && !s.found) {
+        checks.push({ label, status: 'na', msg: 'não informado no XML' + (note ? ' — ' + note : '') });
+        return;
+    }
+    if (xmlVal === null) {
+        checks.push({ label, status: 'warn', msg: 'XML não informa; soma dos itens ' + brl(s.sum) });
+        return;
+    }
+    if (!s.found) {
+        const zero = xmlVal === 0;
+        checks.push({ label, status: zero ? 'na' : 'warn', msg: 'XML ' + brl(xmlVal) + '; nenhum item com a tag' });
+        return;
+    }
+    const diff = Math.abs(xmlVal - s.sum);
+    checks.push({
+        label,
+        status: diff <= 0.02 ? 'ok' : 'bad',
+        msg: 'XML ' + brl(xmlVal) + ' · itens ' + brl(s.sum) + ' · dif. ' + brl(diff) + (s.missing ? ' · ' + s.missing + ' item(ns) sem a tag' : '')
+    });
+}
+
+function itemIssues(items) {
+    const issues = [];
+    const chk = (it, label, base, rate, value) => {
+        if (base === null || rate === null || value === null) return;
+        const expected = base * rate / 100;
+        const diff = Math.abs(expected - value);
+        if (diff > 0.02) issues.push({ item: it, label, expected, value, diff });
+    };
+    items.forEach(it => {
+        chk(it, 'vICMS', it.icmsVBC, it.icmsPICMS, it.icmsVICMS);
+        chk(it, 'vICMSST', it.icmsSTBC, it.icmsSTRate, it.icmsST);
+        chk(it, 'vIBSUF', it.vBC, it.pIBSUF, it.vIBSUF);
+        chk(it, 'vIBSMun', it.vBC, it.pIBSMun, it.vIBSMun);
+        chk(it, 'vCBS', it.vBC, it.pCBS, it.vCBS);
+        if (it.vIBSUF !== null && it.vIBSMun !== null && it.vIBSTotal !== null) {
+            const diff = Math.abs((it.vIBSUF + it.vIBSMun) - it.vIBSTotal);
+            if (diff > 0.02) issues.push({ item: it, label: 'vIBS total', expected: it.vIBSUF + it.vIBSMun, value: it.vIBSTotal, diff });
+        }
+    });
+    return issues;
+}
+
+function reconcileFile(f) {
+    const items = parsedItems.filter(i => i.fileId === f.fileId);
+    const checks = [];
+    auditAdd(checks, 'vProd', f.noteTotals.vProd, 'vProd', items);
+    auditAdd(checks, 'vICMS', f.noteTotals.vICMS, 'icmsVICMS', items);
+    auditAdd(checks, 'vICMSST / vST', f.noteTotals.vICMSST, 'icmsSTOwn', items);
+    auditAdd(checks, 'vBC IBSCBS', f.noteTotals.vBCIBSCBS, 'vBC', items);
+    auditAdd(checks, 'vIBS', f.noteTotals.vIBS, 'vIBSTotal', items);
+    auditAdd(checks, 'vCBS', f.noteTotals.vCBS, 'vCBS', items, 'nota sem grupo IBS/CBS');
+    return { checks, issues: itemIssues(items) };
+}
+
+function renderAudit() {
+    const body = document.getElementById('auditBody');
+    const summary = document.getElementById('auditSummary');
+    if (!body) return;
+    if (!loadedFiles.length) {
+        body.innerHTML = '<p class="audit-summary">Carregue XMLs para comparar <code>&lt;ICMSTot&gt;</code> e <code>&lt;IBSCBSTot&gt;</code> com a soma dos itens.</p>';
+        summary.innerText = '(sem notas)';
+        return;
+    }
+    let bad = 0, warn = 0, issueCount = 0;
+    const cards = loadedFiles.map(f => {
+        const r = reconcileFile(f);
+        r.checks.forEach(c => { if (c.status === 'bad') bad++; else if (c.status === 'warn') warn++; });
+        issueCount += r.issues.length;
+        const lines = r.checks.map(c => {
+            const icon = c.status === 'ok' ? '✓' : c.status === 'bad' ? '✗' : c.status === 'warn' ? '!' : '–';
+            return '<div class="audit-line ' + c.status + '">' + icon + ' <strong>' + esc(c.label) + '</strong>: ' + esc(c.msg) + '</div>';
+        }).join('');
+        const shownIssues = r.issues.slice(0, 8).map(x =>
+            '<div class="audit-line warn">! Item ' + esc(x.item.nItem) + ' (NF ' + esc(x.item.nNF) + '): ' + esc(x.label) +
+            ' calculado ' + brl(x.expected) + ' × XML ' + brl(x.value) + ' (dif. ' + brl(x.diff) + ')</div>'
+        ).join('');
+        const more = r.issues.length > 8 ? '<div class="audit-line warn">… mais ' + (r.issues.length - 8) + ' divergência(s) de item.</div>' : '';
+        const status = f.status.cls === 'bad' ? ' <span class="status-badge bad">' + esc(f.status.label) + '</span>' : '';
+        return '<div class="audit-card"><h4>NF ' + esc(f.nNF) + ' · mod ' + esc(f.mod) + ' · ' + esc(f.emitNome) + status +
+            ' <span style="font-weight:400;color:#64748b;">(' + f.itemCount + ' item(ns))</span></h4>' + lines + shownIssues + more + '</div>';
+    }).join('');
+    body.innerHTML = cards;
+    summary.innerText = '(' + loadedFiles.length + ' nota(s) · ' + bad + ' divergência(s) · ' + warn + ' aviso(s) · ' + issueCount + ' item(ns) com conta divergente)';
+}
+
+// ---------- Arquivos carregados / erros ----------
+function renderFiles() {
+    const panel = document.getElementById('filesPanel');
+    const chips = document.getElementById('fileChips');
+    document.getElementById('fileCount').innerText = loadedFiles.length;
+    panel.style.display = loadedFiles.length ? 'block' : 'none';
+    chips.innerHTML = '';
+    loadedFiles.forEach(f => {
+        const el = document.createElement('span');
+        el.className = 'file-chip';
+        el.innerHTML = '<span class="mod-badge">' + esc(f.mod) + '</span><span><strong>NF ' + esc(f.nNF) + '</strong> · ' + esc(f.fileName) +
+            ' · ' + esc(f.emitNome).substring(0, 32) + ' (' + f.itemCount + ' itens)' + (f.partTotal > 1 ? ' · nota ' + f.part + '/' + f.partTotal : '') +
+            ' ' + statusBadge(f.status) + '</span>';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.title = 'Remover nota';
+        btn.setAttribute('aria-label', 'Remover NF ' + f.nNF + ' (' + f.fileName + ')');
+        btn.innerText = '✕';
+        btn.onclick = () => removeFile(f.fileId);
+        el.appendChild(btn);
+        chips.appendChild(el);
+    });
+    renderErrors();
+}
+
+function renderErrors() {
+    const eb = document.getElementById('errorBox');
+    if (!loadErrors.length) {
+        eb.style.display = 'none';
+        eb.innerHTML = '';
+        return;
+    }
+    eb.style.display = 'block';
+    eb.innerHTML = '<button type="button" aria-label="Fechar avisos" onclick="clearErrors()">×</button>' +
+        '<strong>⚠ ' + loadErrors.length + ' aviso(s):</strong>' +
+        '<ul style="margin:6px 0 0 18px;">' + loadErrors.map(e => '<li>' + esc(e) + '</li>').join('') + '</ul>';
+}
+function clearErrors() { loadErrors = []; renderErrors(); }
+
+function removeFile(fileId) {
+    loadedFiles = loadedFiles.filter(f => f.fileId !== fileId);
+    parsedItems = parsedItems.filter(i => i.fileId !== fileId);
+    currentPage = 1;
+    renderAll();
+}
+function clearAll() {
+    parsedItems = [];
+    loadedFiles = [];
+    loadErrors = [];
+    globalId = 0;
+    fileSeq = 0;
+    currentPage = 1;
+    document.getElementById('searchInput').value = '';
+    document.getElementById('modFilter').value = '';
+    renderAll();
+}
+
+function renderAll() { renderFiles(); renderTable(); }
+
+// ---------- CSV ----------
+const CSV_HEADERS = [
+    'Arquivo', 'Modelo', 'NF', 'Serie', 'Chave', 'Emitente', 'Situacao', 'cStat', 'Item', 'Codigo', 'Descricao',
+    'NCM', 'CFOP', 'CST_ICMS_Tipo', 'Orig', 'Orig_Desc', 'CST_CSOSN', 'CST_CSOSN_Valor', 'CST_CSOSN_Desc',
+    'BC_ICMS', 'Aliq_ICMS', 'VLR_ICMS', 'ICMS_ST_Tipo', 'BC_ICMS_ST', 'Aliq_ICMS_ST', 'VLR_ICMS_ST',
+    'CST_IBS', 'cClassTrib', 'IBS_Grupos_Especiais', 'Valor_Produto', 'BC_IBSCBS',
+    'Aliq_IBS_UF', 'VLR_IBS_UF', 'Aliq_IBS_Mun', 'VLR_IBS_Mun', 'VLR_IBS_Total', 'Aliq_CBS', 'VLR_CBS'
+];
+function csvText(v) {
+    if (v === null || v === undefined) return '';
+    let s = String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
+}
+function csvNum(v) {
+    if (v === null || v === undefined) return '';
+    return String(v).replace('.', ',');
+}
 function exportToCSV() {
-    const sel = parsedItems.filter(i => i.selected);
-    if (!sel.length) { alert('Nenhum dado selecionado para exportar.'); return; }
-    let csv = 'Arquivo;Modelo;NF;Serie;Chave;Emitente;Item;Codigo;Descricao;NCM;CFOP;CST_ICMS_Tipo;Orig;Orig_Desc;CST_CSOSN;CST_CSOSN_Valor;CST_CSOSN_Desc;BC_ICMS;Aliq_ICMS;VLR_ICMS;VLR_ICMS_ST;CST_IBS;cClassTrib;Valor_Produto;BC_IBSCBS;Aliq_IBS_UF;VLR_IBS_UF;Aliq_IBS_Mun;VLR_IBS_Mun;VLR_IBS_Total;Aliq_CBS;VLR_CBS\n';
+    const sel = getFiltered().filter(i => i.selected);
+    if (!sel.length) { alert('Nenhum item visível e marcado para exportar.'); return; }
+    let csv = CSV_HEADERS.map(csvText).join(';') + '\n';
     sel.forEach(item => {
-        const fmt = (n) => (n === null || n === undefined) ? '' : String(n).replace('.', ',');
-        const txt = (v) => (v === null || v === undefined) ? '' : ('"' + String(v).replace(/"/g, '""') + '"');
-        csv += [txt(item.fileName), txt(item.mod), txt(item.nNF), txt(item.serie), txt(item.chave), txt(item.emitNome),
-            txt(item.nItem), txt(item.code), txt(item.description), txt(item.ncm), txt(item.cfop),
-            txt(item.icmsTipo), txt(item.icmsOrig), txt(origDesc(item.icmsOrig)), txt(item.icmsCSTLabel), txt(item.icmsCST), txt(cstCsosnDesc(item.icmsCSTLabel, item.icmsCST)),
-            fmt(item.icmsVBC), fmt(item.icmsPICMS), fmt(item.icmsVICMS), fmt(item.icmsVICMSST),
-            txt(item.cstIBS), txt(item.cClassTrib), fmt(item.vProd), fmt(item.vBC),
-            fmt(item.pIBSUF), fmt(item.vIBSUF), fmt(item.pIBSMun), fmt(item.vIBSMun), fmt(item.vIBSTotal), fmt(item.pCBS), fmt(item.vCBS)
+        csv += [
+            csvText(item.fileName), csvText(item.mod), csvText(item.nNF), csvText(item.serie), csvText(item.chave), csvText(item.emitNome),
+            csvText(item.status.label), csvText(item.status.code), csvText(item.nItem), csvText(item.code), csvText(item.description),
+            csvText(item.ncm), csvText(item.cfop), csvText(item.icmsTipo), csvText(item.icmsOrig), csvText(origDesc(item.icmsOrig)),
+            csvText(item.icmsCSTLabel), csvText(item.icmsCST), csvText(cstCsosnDesc(item.icmsCSTLabel, item.icmsCST)),
+            csvNum(item.icmsVBC), csvNum(item.icmsPICMS), csvNum(item.icmsVICMS),
+            csvText(item.icmsSTKind), csvNum(item.icmsSTBC), csvNum(item.icmsSTRate), csvNum(item.icmsST),
+            csvText(item.cstIBS), csvText(item.cClassTrib), csvText(item.ibsSpecial.join('|')),
+            csvNum(item.vProd), csvNum(item.vBC),
+            csvNum(item.pIBSUF), csvNum(item.vIBSUF), csvNum(item.pIBSMun), csvNum(item.vIBSMun), csvNum(item.vIBSTotal),
+            csvNum(item.pCBS), csvNum(item.vCBS)
         ].join(';') + '\n';
     });
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -715,7 +1180,7 @@ function exportToCSV() {
     setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-// Rodapé Hub Fiscal: copiar chaves de doação e revelar texto completo.
+// ---------- Rodapé: copiar chaves e revelar ----------
 document.querySelectorAll('[data-copy]').forEach(function (btn) {
     btn.addEventListener('click', function () {
         const target = document.getElementById(btn.getAttribute('data-copy'));
@@ -739,7 +1204,6 @@ document.querySelectorAll('[data-copy]').forEach(function (btn) {
         }
     });
 });
-
 document.querySelectorAll('[data-reveal]').forEach(function (link) {
     link.addEventListener('click', function (e) {
         e.preventDefault();
@@ -760,6 +1224,33 @@ document.querySelectorAll('[data-reveal]').forEach(function (link) {
         }
     });
 });
+
+// ---------- Ganchos para o autoteste ----------
+window.AnalisaXML = {
+    parseXMLText,
+    reset() { parsedItems = []; loadedFiles = []; loadErrors = []; globalId = 0; fileSeq = 0; currentPage = 1; },
+    items() { return parsedItems; },
+    files() { return loadedFiles; },
+    errors() { return loadErrors; },
+    totals() { return computeTotals(getFiltered()); },
+    audit() { return loadedFiles.map(f => ({ file: f, ...reconcileFile(f) })); },
+    csvText,
+    brl,
+    renderAll
+};
+
+renderAll();
+
+if (new URLSearchParams(window.location.search).get('selftest') === '1') {
+    const s = document.createElement('script');
+    s.src = 'selftest.js';
+    s.onerror = () => {
+        const p = document.getElementById('selftestPanel');
+        p.className = 'bad';
+        p.textContent = 'Não foi possível carregar selftest.js.';
+    };
+    document.body.appendChild(s);
+}
 </script>
 </body>
 </html>

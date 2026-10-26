@@ -1,93 +1,89 @@
-# AnalisaXML Tributário v2 (Versão Completa & Auditoria)
+# AnalisaXML Tributário: IBS, CBS e ICMS
 
-> **Plataforma de Extração, Validação e Auditoria da Reforma Tributária (EC 132/2023)**  
-> *Leitor de XML de Nota Fiscal Eletrônica (NF-e) voltado para contadores, auditores fiscais e analistas tributários.*
+Leitor local de XML de NF-e (modelo 55) e NFC-e (modelo 65) para conferir, item a item, os valores de ICMS, IBS e CBS informados no arquivo. Roda 100% no navegador: nenhum XML é enviado para servidor.
 
----
+**Site:** https://silvioalbqrq.github.io/AnaliseXML-IBSeCBS/
 
-## 📌 Visão Geral
+## O que a ferramenta faz
 
-O **AnalisaXML Tributário** é uma solução web *Client-Side* desenvolvida para realizar a leitura, apuração e auditoria de arquivos XML de Nota Fiscal Eletrônica (NF-e) sob a perspectiva da **Reforma Tributária brasileira (Emenda Constitucional nº 132/2023)**.
+- Lê vários arquivos `.xml`, uma pasta inteira ou um `.zip` (inclusive arrastando a pasta para a área de upload).
+- Aceita XMLs com mais de uma `<infNFe>` no mesmo arquivo: cada nota é tratada separadamente.
+- Ignora duplicidades pela chave de acesso (`Id` da `<infNFe>`), mesmo que o mesmo XML seja carregado duas vezes.
+- Mostra, por item:
+  - CST/CSOSN e origem do ICMS, ICMS próprio (`vBC`, `pICMS`, `vICMS`);
+  - ICMS ST recolhido (`vBCST`, `pICMSST`, `vICMSST`) e retido (`vBCSTRet`, `pICMSSTRet`, `vICMSSTRet`);
+  - CST e `cClassTrib` do IBS/CBS;
+  - base (`vBC`), alíquotas e valores de IBS UF, IBS Mun e CBS.
+- Lê a situação da nota em `protNFe/infProt/cStat`: autorizada, cancelada, denegada ou sem protocolo.
+- Soma apenas os itens **visíveis no filtro atual e marcados**. Notas canceladas/denegadas continuam na tabela, mas ficam fora dos totais.
+- Exibe `— / não informado` quando a tag não existe no XML. Ausência de tag nunca é convertida em R$ 0,00.
+- Confere os totais do XML (`<ICMSTot>` e `<IBSCBSTot>`) contra a soma dos itens e também a aritmética de cada item (base × alíquota), com tolerância de R$ 0,02 para arredondamento.
+- Exporta CSV (UTF-8 com BOM, separador `;`) dos itens visíveis e marcados, com neutralização de fórmulas (=, +, -, @).
+- Imprime ou salva em PDF com layout próprio.
 
-A ferramenta segrega e calcula detalhadamente os novos impostos incidentes:
-- **IBS (Imposto sobre Bens e Serviços):** Dividido entre alíquotas e valores Estaduais (UF) e Municipais (Mun).
-- **CBS (Contribuição sobre Bens e Serviços):** Alíquota e valor Federal.
-- **Base de Cálculo (`<vBC>`):** Extraída diretamente da nova tag `<gIBSCBS>` ou apurada via *fallback*.
+## O que a ferramenta **não** faz
 
----
+- Não calcula imposto devido, crédito, partilha ou substituição tributária. Apenas lê e soma o que está no XML.
+- Não valida assinatura digital, schema, autenticidade ou autorização na SEFAZ.
+- Não lê NFS-e, CT-e, MDF-e ou outros modelos; aceita somente 55 e 65.
+- Não detalha os grupos especiais de IBS/CBS (`gIBSCBSMono`, `gTribRegular`, `gCredPres`, `gTransfCred`, `gAjusteCompet`). Quando presentes, o item é sinalizado como “grupo especial não detalhado” — os valores não são inferidos.
+- Não aplica as regras de transição de 2026. Os percentuais de IBS (0,1% estadual) e CBS (0,9%) são os informados no XML, não uma regra fixa da ferramenta.
+- A conferência de totais é uma ajuda de auditoria, não um parecer fiscal. Diferenças de arredondamento até R$ 0,02 são aceitas.
 
-## 🚀 Funcionalidades Principais
+## Mapeamento das tags
 
-### 1. 🔍 Validação dos Totais (`<ICMSTot>`) - Auditoria Fiscal
-- Compara automaticamente o somatório real dos itens (`<det><vProd>`) com o valor consolidado declarado na tag de cabeçalho do XML (`<ICMSTot><vProd>`).
-- Exibe um **card de validação** com alerta dinâmico:
-  - **✅ CONSISTENTE:** Quando os valores apurados e declarados batem integralmente.
-  - **⚠️ DIVERGENTE:** Quando há divergência de centavos ou inconsistências na emissão da nota.
+| Campo exibido | Tag lida |
+| --- | --- |
+| Identificação | `infNFe/ide` (`mod`, `serie`, `nNF`, `dhEmi`), `infNFe/emit` |
+| Item | `det/prod` (`cProd`, `xProd`, `NCM`, `CFOP`, `vProd`) |
+| CST/CSOSN e origem | `det/imposto/ICMS/*` (`CST`, `CSOSN`, `orig`) |
+| ICMS próprio | `vBC`, `pICMS`, `vICMS` |
+| ICMS ST recolhido | `vBCST`, `pICMSST`, `vICMSST` |
+| ICMS ST retido | `vBCSTRet`, `pICMSSTRet`, `vICMSSTRet` |
+| CST/cClassTrib IBS/CBS | `det/imposto/IBSCBS/CST` e `cClassTrib` |
+| Base IBS/CBS | `IBSCBS/gIBSCBS/vBC` (sem fallback para `vProd`) |
+| IBS UF | `gIBSCBS/gIBSUF/pIBSUF` e `vIBSUF` |
+| IBS Mun | `gIBSCBS/gIBSMun/pIBSMun` e `vIBSMun` |
+| IBS total do item | `gIBSCBS/vIBS` ou `vIBSUF + vIBSMun` |
+| CBS | `gIBSCBS/gCBS/pCBS` e `vCBS` |
+| Totais da nota | `total/ICMSTot` (`vProd`, `vICMS`, `vICMSST`/`vST`, `vNF`) e `total/IBSCBSTot` (`vBCIBSCBS`, `vIBS`, `vCBS`) |
+| Situação | `protNFe/infProt/cStat` |
 
-### 2. 🖨️ Módulo de Impressão e Exportação para PDF
-- Botão nativo **"🖨️ Imprimir / Salvar PDF"**.
-- Estilo impresso dedicado (`@media print`) que remove elementos de interface (botões de controle, formulário de upload, barra de busca e checkboxes), gerando um relatório limpo e profissional para compor pareceres e auditorias.
+## Como usar
 
-### 3. 🔍 Filtro e Busca em Tempo Real
-- Campo de busca reativo na barra de ferramentas.
-- Permite pesquisar instantaneamente por qualquer termo em **Descrição do Produto**, **Código**, **NCM**, **CST** ou **Classificação Tributária (`cClassTrib`)**, essencial para NF-es com centenas de produtos.
+1. Abra o site publicado ou o `index.html` do repositório.
+2. Arraste um ou mais XMLs, uma pasta ou um `.zip`.
+3. Use a busca e o filtro de modelo; os cards e o CSV respeitam o filtro e a seleção.
+4. Abra “Conferência dos totais do XML × soma dos itens” para ver divergências.
+5. Use “Exportar CSV” ou “Imprimir”.
 
-### 4. ⇅ Ordenação Dinâmica por Colunas
-- Colunas da tabela clicáveis (`sortable`).
-- Permite ordenar em ordem crescente ou decrescente por:
-  - `#` (Número do item)
-  - `Código / Descrição`
-  - `NCM`
-  - `CST / ClassTrib`
-  - `Valor do Produto`
-  - `Base de Cálculo (<vBC>)`
-  - `Valor IBS Total`
-  - `Valor CBS`
+Para rodar localmente:
 
-### 5. 📊 Comparação Simultânea de Múltiplos XMLs
-- Suporte a seleção e upload em lote de múltiplos arquivos XML simultaneamente.
-- Botão **"📊 Comparar XMLs"** que abre uma janela modal exibindo um resumo comparativo de cada nota fiscal (Quantidade de itens, Total dos Produtos, Total IBS e Total CBS).
+```bash
+python -m http.server 8000
+```
 
-### 6. 📥 Exportação para CSV / Excel
-- Exporta os itens selecionados para um arquivo CSV codificado em UTF-8 com BOM, garantindo compatibilidade direta e sem erros de acentuação no Microsoft Excel.
+Depois acesse `http://localhost:8000/`.
 
----
+## Arquivos
 
-## 📑 Mapeamento das Tags XML
+- `index.html` — aplicação (HTML, CSS e JavaScript).
+- `vendor/jszip.min.js` — JSZip 3.10.1 para leitura de `.zip`, servido localmente.
+- `selftest.js` — autoteste com XMLs sintéticos.
+- `README.md` — este documento.
 
-| Campo na Tabela / Auditoria | Tag XML de Origem | Regra de Apuração / Fallback |
-| :--- | :--- | :--- |
-| **Validação de Totais** | `<ICMSTot> -> <vProd>` vs. `Σ(<det> -> <vProd>)` | Compara a soma dos itens com a tag global da nota fiscal |
-| **Código / Descrição** | `<prod> -> <cProd> / <xProd>` | Identificação do produto (Suporta busca reativa) |
-| **NCM** | `<prod> -> <NCM>` | Código de Nomenclatura Comum do Mercosul |
-| **CST / ClassTrib** | `<IBSCBS> -> <CST> / <cClassTrib>` | Classificação fiscal da Reforma Tributária |
-| **Valor Produto** | `<prod> -> <vProd>` | Valor nominal dos bens ou serviços |
-| **BC IBS/CBS (`<vBC>`)** | `<gIBSCBS> -> <vBC>` | Extraída da tag específica da EC 132/2023 (ou `vProd` em fallback) |
-| **IBS UF (Estadual)** | `<gIBSUF> -> <pIBSUF> / <vIBSUF>` | Alíquota e valor do IBS Estadual (Fallback: 0.10%) |
-| **IBS Mun (Municipal)** | `<gIBSMun> -> <pIBSMun> / <vIBSMun>` | Alíquota e valor do IBS Municipal (Fallback: 0.00%) |
-| **CBS (Federal)** | `<gCBS> -> <pCBS> / <vCBS>` | Alíquota e valor da CBS Federal (Fallback: 0.90%) |
+## Autoteste
 
----
+Abra `index.html?selftest=1`. O painel no topo mostra o resultado das verificações: nota autorizada, duplicidade, múltiplas NF-e no mesmo XML, totais divergentes, nota cancelada, ausência de IBS/CBS, ICMS ST recolhido/retido, grupo especial e neutralização de CSV. Os fixtures são sintéticos; nenhum XML real é versionado.
 
-## 🛠️ Tecnologias Utilizadas
+## Privacidade
 
-- **HTML5:** Estrutura semântica e acessível.
-- **CSS3:** Variáveis CSS (`custom properties`), CSS Grid, Flexbox e `@media print` para PDF.
-- **JavaScript (ES6+ Vanilla):** Parsing XML via `DOMParser`, manipulação do DOM, ordenação em memória e filtragem dinâmica.
-- **Zero Dependências:** Funciona 100% de forma autônoma sem necessidade de frameworks ou servidor (Node.js/PHP).
+Todo o processamento ocorre no navegador (`DOMParser` + `FileReader`/Blob). Não há backend, analytics, armazenamento remoto ou envio de chave de acesso. O único recurso externo é o próprio site; o JSZip é local.
 
----
+## Base normativa
 
-## 🔒 Privacidade & Segurança
+- EC 132/2023
+- LC 214/2025
+- NT 2025.002 (tabelas de classificação do IBS/CBS), incluindo os códigos CST do IBS/CBS.
 
-Todo o processamento dos arquivos XML ocorre **100% no navegador do usuário** via JavaScript local (`FileReader` / `DOMParser`). Nenhum dado fiscal, chave de acesso ou valor é enviado para servidores externos ou armazenado na nuvem.
-
----
-
-## 📖 Como Executar
-
-1. Baixe o arquivo `site_extrator_xml_limpo.html`.
-2. Abra-o dando um duplo clique ou arrastando para qualquer navegador web moderno (*Google Chrome, Microsoft Edge, Mozilla Firefox, Safari ou Brave*).
-3. Arraste um ou mais arquivos XML para a caixa de upload.
-4. Utilize a barra de busca, os filtros ou a ordenação de colunas conforme sua necessidade de auditoria.
-5. Clique em **"🖨️ Imprimir / Salvar PDF"** para gerar o relatório impresso ou **"📥 Exportar CSV"** para gerar a planilha.
+Ferramenta educacional. Não substitui parecer técnico ou assessoria contábil.
