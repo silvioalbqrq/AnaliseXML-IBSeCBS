@@ -1,6 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AnalisaXML Tributário">
-  <rect width="64" height="64" rx="14" fill="#0b1f3a"/>
-  <circle cx="27" cy="27" r="12.5" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-width="4"/>
-  <path d="M36.6 36.6 47 47" fill="none" stroke="#34d399" stroke-width="6" stroke-linecap="round"/>
-  <path d="M24.5 23 20.5 27l4 4M29.5 23l4 4-4 4" fill="none" stroke="#60a5fa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Fundo papel/documento branco -->
+  <rect x="6" y="6" width="52" height="52" rx="9" fill="#ffffff" stroke="#0b1f3a" stroke-width="2.5"/>
+  <!-- Aba superior do documento -->
+  <rect x="10" y="10" width="20" height="6" rx="2" fill="#0b1f3a"/>
+  <!-- Tags XML -->
+  <text x="22" y="30" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13" font-weight="800" fill="#2563eb" text-anchor="middle">&lt;</text>
+  <text x="22" y="38" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13" font-weight="800" fill="#0f9f6e" text-anchor="middle">/&gt;</text>
+  <!-- Linha de análise diagonal em azul -->
+  <path d="M16 46 L48 16" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Pontos de dados -->
+  <circle cx="24" cy="36" r="2" fill="#0f9f6e"/>
+  <circle cx="40" cy="22" r="2" fill="#93370d"/>
 </svg>
